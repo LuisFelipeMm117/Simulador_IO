@@ -136,6 +136,14 @@ st.caption(
     "Modelo de Insumo-Producto regionalizado (Flegg FLQ + RAS) · "
     "78 sectores SCIAN · 32 estados · Base INEGI 2018"
 )
+st.markdown("""
+### 🧠 ¿Qué hace esta herramienta?
+
+Este simulador estima el impacto económico total (producción, empleo e ingreso)
+de invertir o reducir recursos en un sector específico dentro de un estado.
+
+Permite identificar qué sectores generan mayor efecto multiplicador en la economía.
+""")
 
 if not simular:
     st.divider()
