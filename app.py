@@ -28,6 +28,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+/* Oculta menú superior (incluye GitHub icon) */
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource(show_spinner="Cargando modelo económico…")
 def cargar_modelo() -> ModeloEconomico:
