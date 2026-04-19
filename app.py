@@ -37,7 +37,7 @@ footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-#@st.cache_resource(show_spinner="Cargando modelo económico…")
+@st.cache_resource(show_spinner="Cargando modelo económico…")
 def cargar_modelo() -> ModeloEconomico:
     return ModeloEconomico("data/")
 
@@ -221,16 +221,6 @@ elif mp >= 1.1: st.warning(f"🟡 **Encadenamiento moderado** (mult. {mp:.3f})."
 else:           st.error(  f"🔴 **Bajo encadenamiento** (mult. {mp:.3f}): sector inactivo o alta importación.")
 
 st.divider()
-
-# ── INTERPRETACIÓN ECONÓMICA ─────────────────────────────
-interp = modelo.interpretar_resultados(res)
-
-st.divider()
-st.subheader("🧠 Interpretación económica")
-
-st.write(f"**Nivel de impacto:** {interp['nivel_impacto'].upper()}")
-st.write(f"**Diagnóstico:** {interp['diagnostico']}")
-st.write(f"**Recomendación:** {interp['recomendacion']}")
 
 # ── CORRECCIÓN BUG-4: filtro basado en impacto, no en base ───────────────────
 # Antes: percentil 25 de df["base"] → excluía sectores con alta demanda pero
