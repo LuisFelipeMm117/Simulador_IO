@@ -142,7 +142,7 @@ with st.sidebar:
 st.title("📊 Simulador Económico Regional — MIP México")
 st.caption(
     "Modelo de Insumo-Producto regionalizado (Flegg FLQ + RAS) · "
-    f"{modelo.n} sectores SCIAN · {len(modelos.estados_raw)} estados · Base INEGI 2018"
+    f"{modelo.n} sectores SCIAN · {len(modelo.estados_raw)} estados · Base INEGI 2018"
 )
 st.markdown("""
 ### 🧠 ¿Qué hace esta herramienta?
