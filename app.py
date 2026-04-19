@@ -59,7 +59,7 @@ with st.sidebar:
     st.caption(
         f"**X total:** ${info['X_total_mmdp']:,.0f} Mmdp  \n"
         f"**Empleo:** {info['PO_total']:,} puestos  \n"
-        f"**Sectores activos:** {info['sectores_activos']}/78"
+        f"**Sectores activos:** {info['sectores_activos']}/{modelo.n}"
     )
     st.divider()
 
@@ -142,7 +142,7 @@ with st.sidebar:
 st.title("📊 Simulador Económico Regional — MIP México")
 st.caption(
     "Modelo de Insumo-Producto regionalizado (Flegg FLQ + RAS) · "
-    "78 sectores SCIAN · 32 estados · Base INEGI 2018"
+    f"{modelo.n} sectores SCIAN · {len(modelos.estados_raw)} estados · Base INEGI 2018"
 )
 st.markdown("""
 ### 🧠 ¿Qué hace esta herramienta?
