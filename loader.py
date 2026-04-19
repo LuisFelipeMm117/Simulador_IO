@@ -50,7 +50,7 @@ class ModeloEconomico:
 
         # ── Resumen por estado ────────────────────────────────────────────
         self.df_resumen = pd.read_json(
-            os.path.join(data_path, "resumen.json"), encoding="utf-8"
+            os.path.join(data_path, "resumen.json")
         )
 
         # ── Lista de estados disponibles ──────────────────────────────────
