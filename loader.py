@@ -265,3 +265,45 @@ class ModeloEconomico:
             .head(top_n)
             .reset_index(drop=True)
         )
+    
+    def interpretar_resultados(self, res: dict) -> dict:
+    """
+    Traduce resultados numéricos a interpretación económica.
+    No afecta el modelo, solo agrega capa de negocio.
+    """
+
+    mult = res.get("mult_produccion", 0)
+    empleo = res.get("delta_E_total", 0)
+    ingreso = res.get("delta_VA_total_pesos", 0)
+
+    # Clasificación robusta
+    if mult >= 1.4:
+        nivel = "alto"
+    elif mult >= 1.2:
+        nivel = "medio"
+    else:
+        nivel = "bajo"
+
+    # Diagnóstico
+    if mult < 1.1:
+        causa = "baja integración local o alta dependencia de importaciones"
+    elif mult < 1.3:
+        causa = "encadenamientos productivos moderados"
+    else:
+        causa = "alta integración en la economía regional"
+
+    # Recomendación
+    if nivel == "alto":
+        recomendacion = "priorizar inversión o política industrial en este sector"
+    elif nivel == "medio":
+        recomendacion = "sector viable, pero requiere fortalecer proveedores locales"
+    else:
+        recomendacion = "impacto limitado; no es prioritario para desarrollo económico"
+
+    return {
+        "nivel_impacto": nivel,
+        "diagnostico": causa,
+        "recomendacion": recomendacion,
+        "empleo_estimado": float(empleo),
+        "ingreso_estimado": float(ingreso),
+    }
