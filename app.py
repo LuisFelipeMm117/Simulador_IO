@@ -37,7 +37,7 @@ footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_resource(show_spinner="Cargando modelo económico…")
+#@st.cache_resource(show_spinner="Cargando modelo económico…")
 def cargar_modelo() -> ModeloEconomico:
     return ModeloEconomico("data/")
 
