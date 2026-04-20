@@ -31,15 +31,14 @@ st.markdown("""
 st.markdown(
     """
     <style>
-    /* Oculta todos los botones del toolbar */
-    header [data-testid="stToolbar"] button,
-    header [data-testid="stToolbar"] a {
+    /* Oculta TODO el toolbar */
+    header [data-testid="stToolbar"] * {
         display: none !important;
     }
 
-    /* Vuelve a mostrar SOLO el botón Share */
-    header [data-testid="stToolbar"] button[title="Share"] {
-        display: inline-flex !important;
+    /* Muestra SOLO el primer elemento (Share) */
+    header [data-testid="stToolbar"] > div:first-child {
+        display: flex !important;
     }
     </style>
     """,
