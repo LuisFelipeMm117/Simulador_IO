@@ -28,14 +28,26 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-/* Oculta menú superior (incluye GitHub icon) */
-#MainMenu {visibility: hidden;}
-/*header {visibility: hidden;}*/
-footer {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    /* Oculta menú superior */
+    #MainMenu {visibility: hidden;}
+
+    /* NO ocultes el header completo */
+    /* header {visibility: hidden;} */
+
+    /* Oculta footer */
+    footer {visibility: hidden;}
+
+    /* Oculta ícono de GitHub */
+    header [data-testid="stToolbar"] a[href*="github.com"] {
+        display: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 @st.cache_resource(show_spinner="Cargando modelo económico…")
 def cargar_modelo() -> ModeloEconomico:
