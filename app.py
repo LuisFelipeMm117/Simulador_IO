@@ -31,18 +31,15 @@ st.markdown("""
 st.markdown(
     """
     <style>
-    /* Oculta menú superior */
-    #MainMenu {visibility: hidden;}
-
-    /* NO ocultes el header completo */
-    /* header {visibility: hidden;} */
-
-    /* Oculta footer */
-    footer {visibility: hidden;}
-
-    /* Oculta ícono de GitHub */
-    header [data-testid="stToolbar"] a[href*="github.com"] {
+    /* Oculta todos los botones del toolbar */
+    header [data-testid="stToolbar"] button,
+    header [data-testid="stToolbar"] a {
         display: none !important;
+    }
+
+    /* Vuelve a mostrar SOLO el botón Share */
+    header [data-testid="stToolbar"] button[title="Share"] {
+        display: inline-flex !important;
     }
     </style>
     """,
