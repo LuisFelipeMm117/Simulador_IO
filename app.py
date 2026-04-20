@@ -31,14 +31,9 @@ st.markdown("""
 st.markdown(
     """
     <style>
-    /* Oculta TODO el toolbar */
-    header [data-testid="stToolbar"] * {
+    /* Oculta todos los elementos del toolbar excepto el primero (Share) */
+    header [data-testid="stToolbar"] > div:not(:first-child) {
         display: none !important;
-    }
-
-    /* Muestra SOLO el primer elemento (Share) */
-    header [data-testid="stToolbar"] > div:first-child {
-        display: flex !important;
     }
     </style>
     """,
