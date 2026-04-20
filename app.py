@@ -32,7 +32,7 @@ st.markdown("""
 <style>
 /* Oculta menú superior (incluye GitHub icon) */
 #MainMenu {visibility: hidden;}
-header {visibility: hidden;}
+/*header {visibility: hidden;}*/
 footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
