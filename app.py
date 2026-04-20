@@ -28,17 +28,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown(
-    """
-    <style>
-    /* Oculta todos los elementos del toolbar excepto el primero (Share) */
-    header [data-testid="stToolbar"] > div:not(:first-child) {
-        display: none !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 @st.cache_resource(show_spinner="Cargando modelo económico…")
 def cargar_modelo() -> ModeloEconomico:
@@ -62,7 +51,7 @@ with st.sidebar:
     st.caption(
         f"**X total:** ${info['X_total_mmdp']:,.0f} Mmdp  \n"
         f"**Empleo:** {info['PO_total']:,} puestos  \n"
-        f"**Sectores activos:** {info['sectores_activos']}/{modelo.n}"
+        f"**Sectores activos:** {info['sectores_activos']}/78"
     )
     st.divider()
 
@@ -145,16 +134,8 @@ with st.sidebar:
 st.title("📊 Simulador Económico Regional — MIP México")
 st.caption(
     "Modelo de Insumo-Producto regionalizado (Flegg FLQ + RAS) · "
-    f"{modelo.n} sectores SCIAN · {len(modelo.estados_raw)} estados · Base INEGI 2018"
+    "78 sectores SCIAN · 32 estados · Base INEGI 2018"
 )
-st.markdown("""
-### 🧠 ¿Qué hace esta herramienta?
-
-Este simulador estima el impacto económico total (producción, empleo e ingreso)
-de invertir o reducir recursos en un sector específico dentro de un estado.
-
-Permite identificar qué sectores generan mayor efecto multiplicador en la economía.
-""")
 
 if not simular:
     st.divider()
