@@ -192,7 +192,15 @@ if monto_pesos == 0:
 
 # Simulación
 with st.spinner("Calculando impactos…"):
+  try:
     res = modelo.simular(estado_key, sector_idx, monto_pesos)
+  except ValueError as e:
+    st.error(f"Error de parámetro {e}")
+    st.stop()
+  except Exception as e:
+    st.error(f"Error inesperado al simular. Intenta con otro sector o estado.")
+    st.exception(e)
+    st.stop()
 
 df = res["df_detalle"]
 
