@@ -139,13 +139,8 @@ class ModeloEconomico:
 
         d = self._load_estado(estado_key)
         L, e, X = d["L"], d["e"], d["X"]
-#        v = self.v_n   # coeficiente VA nacional (v estatal = 1 por construcción)
-        # Usar coeficiente regional si existe y es válido; si no, fallback a nacional 
-        v_regional = d.get("v", None)
-        if v_regional is not None and np.all(np.isfinite(v_regional)):
-            v = v_regional
-        else:
-            v = self.v_n
+        v = self.v_n   # coeficiente VA nacional (v estatal = 1 por construcción)
+
 
         # Convertir pesos a Mmdp (unidad del modelo)
         monto_mmdp = monto_pesos * MXN_A_MMDP
