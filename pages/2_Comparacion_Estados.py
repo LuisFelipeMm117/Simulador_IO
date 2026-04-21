@@ -80,29 +80,6 @@ if st.button("▶ Comparar estados", type="primary"):
             ).properties(height=680)
 
             st.altair_chart(ch, use_container_width=True)
-        #with col1:
-          #  st.markdown("#### Multiplicador de producción por estado")
-         #   min_v = df_comp["mult_produccion"].min()
-          #  max_v = df_comp["mult_produccion"].max()
-           # padding = (max_v - min_v) * 0.05 if max_v > min_v else 0.05
-            #ch = alt.Chart(df_comp).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
-             #   x=alt.X("mult_produccion:Q", title="Multiplicador producción",
-              #           #scale=alt.Scale(domain=[1, df_comp["mult_produccion"].max()*1.05])),
-               #         min_v = df_comp["mult_produccion"].min()
-                #        max_v = df_comp["mult_produccion"].max()
-                 #            padding = (max_v - min_v) * 0.05 if max_v > min_v else 0.05
-
-#scale=alt.Scale(domain=[max(0, min_v - padding), max_v + padding])
- #               y=alt.Y("estado:N", sort="-x", title=None),
-  #              color=alt.Color("mult_produccion:Q", scale=alt.Scale(scheme="blues"), legend=None),
-   #             tooltip=[
-    #                alt.Tooltip("estado:N", title="Estado"),
-     #               alt.Tooltip("mult_produccion:Q", title="Mult. producción", format=".4f"),
-      #              alt.Tooltip("mult_ingreso:Q", title="Mult. ingreso", format=".4f"),
-                ]
-       #     ).properties(height=680)
-        #    st.altair_chart(ch, use_container_width=True)
-
         with col2:
             st.markdown("#### Multiplicador de ingreso (valor agregado) por estado")
             ch2 = alt.Chart(df_comp).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
