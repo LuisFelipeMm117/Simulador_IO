@@ -53,8 +53,6 @@ if st.button("▶ Comparar estados", type="primary"):
             min_v = df_comp["mult_produccion"].min()
             max_v = df_comp["mult_produccion"].max()
             padding = (max_v - min_v) * 0.05 if max_v > min_v else 0.05
-
-# ── gráfico ───────────────────────────────────────────
             ch = alt.Chart(df_comp).mark_bar(
                 cornerRadiusTopLeft=4,
                 cornerRadiusTopRight=4
