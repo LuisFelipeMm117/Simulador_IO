@@ -43,13 +43,13 @@ if df_comp is None:
     st.info("Ejecuta la simulación para ver resultados")
 elif df_comp.empty:
     st.warning("El sector seleccionado no tiene actividad en ningún estado.")
-    else:
-        st.success(f"Comparando **{len(df_comp)} estados** con un shock de ${monto:,.0f} MXN en **{sector_name}**")
+else:
+     st.success(f"Comparando **{len(df_comp)} estados** con un shock de ${monto:,.0f} MXN en **{sector_name}**")
 
 st.divider()
 
     # ── Tabs ──────────────────────────────────────────────────────────────
-    t1, t2, t3 = st.tabs(["📈 Multiplicadores", "💰 Impacto Absoluto", "📋 Tabla"])
+t1, t2, t3 = st.tabs(["📈 Multiplicadores", "💰 Impacto Absoluto", "📋 Tabla"])
 
     with t1:
         col1, col2 = st.columns(2)
