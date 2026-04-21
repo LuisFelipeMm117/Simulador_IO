@@ -34,14 +34,19 @@ with monto_col:
 
 if st.button("▶ Comparar estados", type="primary"):
     with st.spinner("Ejecutando simulación en los 32 estados…"):
-        df_comp = modelo.comparar_estados(sector_idx, monto)
+        st.session_state["df_comp"] = modelo.comparar_estados(sector_idx, monto)
 
-    if df_comp.empty:
-        st.warning("El sector seleccionado no tiene actividad en ningún estado.")
-        st.stop()
+# ── cargar datos persistentes ─────────────────────────
+df_comp = st.session_state.get("df_comp")
 
-    st.success(f"Comparando **{len(df_comp)} estados** con un shock de ${monto:,.0f} MXN en **{sector_name}**")
-    st.divider()
+if df_comp is None:
+    st.info("Ejecuta la simulación para ver resultados")
+elif df_comp.empty:
+    st.warning("El sector seleccionado no tiene actividad en ningún estado.")
+    else:
+        st.success(f"Comparando **{len(df_comp)} estados** con un shock de ${monto:,.0f} MXN en **{sector_name}**")
+
+st.divider()
 
     # ── Tabs ──────────────────────────────────────────────────────────────
     t1, t2, t3 = st.tabs(["📈 Multiplicadores", "💰 Impacto Absoluto", "📋 Tabla"])
