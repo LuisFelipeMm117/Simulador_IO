@@ -44,60 +44,72 @@ if df_comp is None:
 elif df_comp.empty:
     st.warning("El sector seleccionado no tiene actividad en ningún estado.")
 else:
-     st.success(f"Comparando **{len(df_comp)} estados** con un shock de ${monto:,.0f} MXN en **{sector_name}**")
+    st.success(f"Comparando **{len(df_comp)} estados** con un shock de ${monto:,.0f} MXN en **{sector_name}**")
 
 st.divider()
 
-    # ── Tabs ──────────────────────────────────────────────────────────────
+# ── Tabs ──────────────────────────────────────────────────────────────
 t1, t2, t3 = st.tabs(["📈 Multiplicadores", "💰 Impacto Absoluto", "📋 Tabla"])
 
-    with t1:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("#### Multiplicador de producción por estado")
-            min_v = df_comp["mult_produccion"].min()
-            max_v = df_comp["mult_produccion"].max()
-            padding = (max_v - min_v) * 0.05 if max_v > min_v else 0.05
-            ch = alt.Chart(df_comp).mark_bar(
-                cornerRadiusTopLeft=4,
-                cornerRadiusTopRight=4
-            ).encode(
-                x=alt.X(
-                    "mult_produccion:Q",
-                    title="Multiplicador producción",
-                    scale=alt.Scale(domain=[max(0, min_v - padding), max_v + padding])
-                ),
-                y=alt.Y(
-                    "estado:N",
-                    sort="-x",
-                    title=None
-                ),
-                color=alt.Color(
-                    "mult_produccion:Q",
-                    scale=alt.Scale(scheme="blues"),
-                    legend=None
-                ),
-                tooltip=[
-                    alt.Tooltip("estado:N", title="Estado"),
-                    alt.Tooltip("mult_produccion:Q", title="Mult. producción", format=".4f"),
-                    alt.Tooltip("mult_ingreso:Q", title="Mult. ingreso", format=".4f"),
-                ]
-            ).properties(height=680)
+with t1:
+    col1, col2 = st.columns(2)
 
-            st.altair_chart(ch, use_container_width=True)
-        with col2:
-            st.markdown("#### Multiplicador de ingreso (valor agregado) por estado")
-            ch2 = alt.Chart(df_comp).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
-                x=alt.X("mult_ingreso:Q", title="Multiplicador ingreso"),
-                y=alt.Y("estado:N", sort="-x", title=None),
-                color=alt.Color("mult_ingreso:Q", scale=alt.Scale(scheme="greens"), legend=None),
-                tooltip=[
-                    alt.Tooltip("estado:N"),
-                    alt.Tooltip("mult_ingreso:Q", format=".4f"),
-                ]
-            ).properties(height=680)
-            st.altair_chart(ch2, use_container_width=True)
+    with col1:
+        st.markdown("#### Multiplicador de producción por estado")
 
+        min_v = df_comp["mult_produccion"].min()
+        max_v = df_comp["mult_produccion"].max()
+        padding = (max_v - min_v) * 0.05 if max_v > min_v else 0.05
+
+        ch = alt.Chart(df_comp).mark_bar(
+            cornerRadiusTopLeft=4,
+            cornerRadiusTopRight=4
+        ).encode(
+            x=alt.X(
+                "mult_produccion:Q",
+                title="Multiplicador producción",
+                scale=alt.Scale(domain=[max(0, min_v - padding), max_v + padding])
+            ),
+            y=alt.Y(
+                "estado:N",
+                sort="-x",
+                title=None
+            ),
+            color=alt.Color(
+                "mult_produccion:Q",
+                scale=alt.Scale(scheme="blues"),
+                legend=None
+            ),
+            tooltip=[
+                alt.Tooltip("estado:N", title="Estado"),
+                alt.Tooltip("mult_produccion:Q", format=".4f"),
+                alt.Tooltip("mult_ingreso:Q", format=".4f"),
+            ]
+        ).properties(height=680)
+
+        st.altair_chart(ch, use_container_width=True)
+
+    with col2:
+        st.markdown("#### Multiplicador de ingreso (valor agregado) por estado")
+
+        ch2 = alt.Chart(df_comp).mark_bar(
+            cornerRadiusTopLeft=4,
+            cornerRadiusTopRight=4
+        ).encode(
+            x=alt.X("mult_ingreso:Q", title="Multiplicador ingreso"),
+            y=alt.Y("estado:N", sort="-x", title=None),
+            color=alt.Color(
+                "mult_ingreso:Q",
+                scale=alt.Scale(scheme="greens"),
+                legend=None
+            ),
+            tooltip=[
+                alt.Tooltip("estado:N"),
+                alt.Tooltip("mult_ingreso:Q", format=".4f"),
+            ]
+        ).properties(height=680)
+
+        st.altair_chart(ch2, use_container_width=True)
     with t2:
         col3, col4 = st.columns(2)
         with col3:
