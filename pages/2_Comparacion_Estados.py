@@ -52,7 +52,12 @@ if st.button("▶ Comparar estados", type="primary"):
             st.markdown("#### Multiplicador de producción por estado")
             ch = alt.Chart(df_comp).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
                 x=alt.X("mult_produccion:Q", title="Multiplicador producción",
-                         scale=alt.Scale(domain=[1, df_comp["mult_produccion"].max()*1.05])),
+                         #scale=alt.Scale(domain=[1, df_comp["mult_produccion"].max()*1.05])),
+                        min_v = df_comp["mult_produccion"].min()
+                        max_v = df_comp["mult_produccion"].max()
+                             padding = (max_v - min_v) * 0.05 if max_v > min_v else 0.05
+
+scale=alt.Scale(domain=[max(0, min_v - padding), max_v + padding])
                 y=alt.Y("estado:N", sort="-x", title=None),
                 color=alt.Color("mult_produccion:Q", scale=alt.Scale(scheme="blues"), legend=None),
                 tooltip=[
