@@ -143,20 +143,29 @@ with t3:
         .background_gradient(cmap="YlOrRd", axis=None)
     )
 
-st.dataframe(styled, use_container_width=True, height=500)
+    st.dataframe(styled, use_container_width=True, height=500)
 
-    # Diagonal (LQ sectorial promedio)
+    # ── Diagonal ─────────────────────────
     st.markdown("#### LQ diagonal promedio por sector")
+
     diag = pd.DataFrame({
         "nombre": nombres_activos,
         "FLQ_diag": np.diag(FLQ_sub)
     }).sort_values("FLQ_diag", ascending=False)
-    ch5 = alt.Chart(diag.head(20)).mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
+
+    ch5 = alt.Chart(diag.head(20)).mark_bar(
+        cornerRadiusTopLeft=3,
+        cornerRadiusTopRight=3
+    ).encode(
         x=alt.X("FLQ_diag:Q", title="FLQ diagonal", scale=alt.Scale(domain=[0,1])),
         y=alt.Y("nombre:N", sort="-x", title=None),
         color=alt.Color("FLQ_diag:Q", scale=alt.Scale(scheme="oranges"), legend=None),
-        tooltip=[alt.Tooltip("nombre:N"), alt.Tooltip("FLQ_diag:Q", format=".4f")]
+        tooltip=[
+            alt.Tooltip("nombre:N"),
+            alt.Tooltip("FLQ_diag:Q", format=".4f")
+        ]
     ).properties(height=420)
+
     st.altair_chart(ch5, use_container_width=True)
 
 # ── TAB 4: Comparativa nacional ───────────────────────────────────────────────
