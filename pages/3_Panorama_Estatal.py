@@ -135,8 +135,15 @@ with t3:
     st.caption("FLQ_ij: fracción del coeficiente técnico nacional satisfecha localmente. 1 = abastecimiento local completo.")
 
     df_flq_heat = pd.DataFrame(FLQ_sub, index=nombres_activos, columns=nombres_activos)
-    st.dataframe(df_flq_heat.style.background_gradient(cmap="YlOrRd", vmin=0, vmax=1)
-                 .format("{:.3f}"), use_container_width=True, height=500)
+    df_flq_heat = df_flq_heat.fillna(0)
+
+    styled = (
+        df_flq_heat.style
+        .format("{:.3f}")
+        .background_gradient(cmap="YlOrRd", axis=None)
+    )
+
+st.dataframe(styled, use_container_width=True, height=500)
 
     # Diagonal (LQ sectorial promedio)
     st.markdown("#### LQ diagonal promedio por sector")
