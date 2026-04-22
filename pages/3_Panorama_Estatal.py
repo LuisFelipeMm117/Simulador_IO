@@ -90,7 +90,7 @@ with t1:
 # ── TAB 2: Multiplicadores ────────────────────────────────────────────────────
 with t2:
     mult_prod = d["L"].sum(axis=0)
-    mult_ing  = d["v"] * mult_prod
+    mult_ing  = modelo.v_n * mult_prod
 
     df_mult = pd.DataFrame({
         "scian":    modelo.sectores,
