@@ -137,11 +137,7 @@ with t3:
     df_flq_heat = pd.DataFrame(FLQ_sub, index=nombres_activos, columns=nombres_activos)
     df_flq_heat = df_flq_heat.fillna(0)
 
-    styled = (
-        df_flq_heat.style
-        .format("{:.3f}")
-        .background_gradient(cmap="YlOrRd", axis=None)
-    )
+    st.dataframe(df_flq_heat, use_container_width=True, height=500)
 
     st.dataframe(styled, use_container_width=True, height=500)
 
