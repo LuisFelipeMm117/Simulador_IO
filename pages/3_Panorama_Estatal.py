@@ -129,7 +129,10 @@ with t3:
     FLQ = d["FLQ"]
     activos_idx = np.where(d["VA_r"] > 0)[0]
     FLQ_sub = FLQ[np.ix_(activos_idx, activos_idx)]
-    nombres_activos = [modelo.sector_names[modelo.sectores[i]][:25] for i in activos_idx]
+    nombres_activos = [
+        f"{modelo.sector_names[modelo.sectores[i]][:20]}_{i}"
+        for i in activos_idx
+]
 
     st.markdown("#### Matriz FLQ (sectores activos)")
     st.caption("FLQ_ij: fracción del coeficiente técnico nacional satisfecha localmente. 1 = abastecimiento local completo.")
