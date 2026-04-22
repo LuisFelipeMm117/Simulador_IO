@@ -139,8 +139,6 @@ with t3:
 
     st.dataframe(df_flq_heat, use_container_width=True, height=500)
 
-    st.dataframe(styled, use_container_width=True, height=500)
-
     # ── Diagonal ─────────────────────────
     st.markdown("#### LQ diagonal promedio por sector")
 
