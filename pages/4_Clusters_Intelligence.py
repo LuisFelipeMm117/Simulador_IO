@@ -61,10 +61,6 @@ st.markdown("""
 }
 
 /* Inputs seguros (sin botones) */
-/* Inputs controlados únicamente aqui ib stSelect */
-.stTextInput input,
-.stNumberInput input,
-
 
 /* Títulos */
 h1, h2, h3, h4 {
@@ -72,10 +68,6 @@ h1, h2, h3, h4 {
 }
 
 /* FIX uploader (CRÍTICO) */
-[C] label {
-    font-family: var(--sans) !important;
-}
-
 [data-testid="stFileUploader"] button {
     font-family: var(--sans) !important;
 }
@@ -89,8 +81,7 @@ h1, h2, h3, h4 {
     font-family: var(--sans) !important;
 }
 
-/* ── SLIDER LIMPIO ── * arruba uba stfile/
-
+/* ── SLIDER LIMPIO ── */
 /* Track (fondo) */
 .stSlider > div > div > div > div {
     background: #e2e8f0 !important;
