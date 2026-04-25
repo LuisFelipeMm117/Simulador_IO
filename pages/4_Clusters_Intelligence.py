@@ -48,26 +48,32 @@ st.markdown("""
     --ok:   #10b981;
     --warn: #ef4444;
 }
-/* TIPOGRAFÍA SEGURA */
+/* ───── TIPOGRAFÍA LIMPIA (SIN ROMPER STREAMLIT) ───── */
 
-/* Markdown */
+/* Texto normal */
+p, span, label {
+    font-family: var(--sans) !important;
+}
 
-/* Inputs normales */
+/* Sidebar SOLO texto (no componentes internos) */
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p {
+    font-family: var(--sans) !important;
+}
+
+/* Inputs seguros (sin botones) */
 input, textarea, select {
     font-family: var(--sans) !important;
 }
 
-/* Sidebar SOLO texto */
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] span,
-[data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] span {
-    font-family: var(--sans) !important;
+/* Títulos */
+h1, h2, h3, h4 {
+    font-family: var(--mono) !important;
 }
 
-/* Títulos */
-h1, h2 {
-    font-family: var(--mono) !important;
+/* FIX uploader (CRÍTICO) */
+[data-testid="stFileUploader"] * {
+    font-family: var(--sans) !important;
 }
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
