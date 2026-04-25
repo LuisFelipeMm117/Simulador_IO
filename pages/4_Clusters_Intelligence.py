@@ -717,11 +717,8 @@ with tab2:
               <td style="padding:7px 10px; font-family:'Space Mono',monospace; font-size:12px; color:#64748b;">#{int(row['rank'])}</td>
               <td style="padding:7px 10px; font-family:'Space Mono',monospace; font-size:12px; color:#00e5ff;">C{int(row['cluster'])}</td>
               <td style="padding:7px 10px; font-size:12px; color:#94a3b8;">{int(row['tamaño'])}</td>
-              <td style="padding:7px 10px;">
-                <div style="background:#252a3a; border-radius:4px; height:6px; width:100%; overflow:hidden;">
-                  <div style="background:linear-gradient(90deg,#7c3aed,#00e5ff); width:{bar_w}%; height:100%; border-radius:4px;"></div>
-                </div>
-                <div style="font-family:'Space Mono',monospace; font-size:10px; color:#64748b; margin-top:2px;">{row['score']:.4f}</div>
+              <td style="padding:7px 10px; font-family:'Space Mono',monospace; font-size:11px; color:#0f172a;">
+              {row['score']:.4f}
               </td>
             </tr>
             """
