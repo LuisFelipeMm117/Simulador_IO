@@ -325,7 +325,7 @@ if not labels_path.exists():
 
 df_lab = pd.read_csv(labels_path)
 
-if "sector" not in df_lab.columns:
+if "nombre" not in df_lab.columns:
     st.error("El CSV debe tener una columna llamada 'sector'")
     st.stop()
 
