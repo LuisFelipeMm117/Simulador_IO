@@ -589,25 +589,47 @@ with tab1:
     ]
 
     node_trace = go.Scatter(
-        x=node_x, y=node_y,
-        mode="markers",
-        marker=dict(
-            size=node_sizes,
-            color=node_colors,
-            colorscale="Turbo",
-            showscale=True,
-            colorbar=dict(title="Cluster", thickness=12, len=0.6,
-                          tickfont=dict(family="Space Mono", size=9, color="#64748b"),
-                          titlefont=dict(family="Space Mono", size=9, color="#64748b")),
-            line=dict(width=1.5, color="#0d0f14"),
-            opacity=0.92,
+    x=node_x,
+    y=node_y,
+    mode="markers",
+    marker=dict(
+        size=node_sizes,
+        color=[int(c) for c in node_colors],
+        colorscale="Turbo",
+        showscale=True,
+        colorbar=dict(
+            title=dict(
+                text="Cluster",
+                font=dict(
+                    family="Space Mono",
+                    size=9,
+                    color="#64748b"
+                )
+            ),
+            thickness=12,
+            len=0.6,
+            tickfont=dict(
+                family="Space Mono",
+                size=9,
+                color="#64748b"
+            )
         ),
-        text=[labels[nd] for nd in sub.nodes()],
-        hovertext=node_hover,
-        hoverinfo="text",
-        hoverlabel=dict(bgcolor="#1c2030", bordercolor="#252a3a",
-                        font=dict(family="Space Mono", size=11, color="#e2e8f0")),
+        line=dict(width=1.5, color="#0d0f14"),
+        opacity=0.92
+    ),
+    text=[labels[nd] for nd in sub.nodes()],
+    hovertext=node_hover,
+    hoverinfo="text",
+    hoverlabel=dict(
+        bgcolor="#1c2030",
+        bordercolor="#252a3a",
+        font=dict(
+            family="Space Mono",
+            size=11,
+            color="#e2e8f0"
+        )
     )
+)
 
     fig_net = go.Figure(data=edge_traces + [node_trace])
     fig_net.update_layout(
