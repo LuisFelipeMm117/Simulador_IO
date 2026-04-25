@@ -51,7 +51,10 @@ st.markdown("""
 /* ───── TIPOGRAFÍA LIMPIA (SIN ROMPER STREAMLIT) ───── */
 
 /* Texto normal */
-p, span, label {
+/* SOLO texto visible, NO internals de Streamlit */
+.stMarkdown p,
+.stMarkdown span,
+label {
     font-family: var(--sans) !important;
 }
 
@@ -62,7 +65,10 @@ p, span, label {
 }
 
 /* Inputs seguros (sin botones) */
-input, textarea, select {
+/* Inputs controlados únicamente */
+.stTextInput input,
+.stNumberInput input,
+.stSelectbox div {
     font-family: var(--sans) !important;
 }
 
@@ -72,7 +78,11 @@ h1, h2, h3, h4 {
 }
 
 /* FIX uploader (CRÍTICO) */
-[data-testid="stFileUploader"] * {
+[data-testid="stFileUploader"] label {
+    font-family: var(--sans) !important;
+}
+
+[data-testid="stFileUploader"] button {
     font-family: var(--sans) !important;
 }
 /* ── Sidebar ── */
