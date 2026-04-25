@@ -59,7 +59,7 @@ st.markdown("""
     border-right: 1px solid var(--border) !important;
 }
 [data-testid="stSidebar"] * { color: var(--text) !important; }
-[data-testid="stSidebar"] .stSlider > div > div { background: var(--accent2) !important; }
+[data-testid="stSidebar"] .stSlider > div > div { background: var(--accent) !important; }
 
 /* ── Headings ── */
 h1,h2,h3,h4 {
