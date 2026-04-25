@@ -59,7 +59,24 @@ st.markdown("""
     border-right: 1px solid var(--border) !important;
 }
 [data-testid="stSidebar"] * { color: var(--text) !important; }
-[data-testid="stSidebar"] .stSlider > div > div { background: var(--accent) !important; }
+
+/* ── SLIDER LIMPIO ── */
+
+/* Track (fondo) */
+.stSlider > div > div > div > div {
+    background: #e2e8f0 !important;
+}
+
+/* Barra activa */
+.stSlider > div > div > div > div > div {
+    background: var(--accent) !important;
+}
+
+/* Handle */
+.stSlider > div > div > div > div > div > div {
+    background: #ffffff !important;
+    border: 2px solid var(--accent) !important;
+}
 
 /* ── Headings ── */
 h1,h2,h3,h4 {
