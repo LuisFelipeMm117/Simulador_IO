@@ -31,28 +31,28 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 :root {
-    --bg:        #0d0f14;
-    --surface:   #141720;
-    --surface2:  #1c2030;
-    --border:    #252a3a;
-    --accent:    #00e5ff;
+    --bg:        #f8fafc;
+    --surface:   #ffffff;
+    --surface2:  #f1f5f9;
+    --border:    #e2e8f0;
+
+    --accent:    #2563eb;
     --accent2:   #7c3aed;
     --accent3:   #f59e0b;
-    --warn:      #ef4444;
-    --ok:        #10b981;
-    --text:      #e2e8f0;
+
+    --text:      #0f172a;
     --muted:     #64748b;
+
     --mono:      'Space Mono', monospace;
     --sans:      'DM Sans', sans-serif;
+    --ok:   #10b981;
+    --warn: #ef4444;
 }
 
 /* Solo estiliza componentes, NO fondo global */
 [data-testid="stApp"] {
     font-family: var(--sans) !important;
 }
-    font-family: var(--sans) !important;
-}
-
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
@@ -62,11 +62,14 @@ st.markdown("""
 [data-testid="stSidebar"] .stSlider > div > div { background: var(--accent2) !important; }
 
 /* ── Headings ── */
-h1,h2,h3,h4 { font-family: var(--mono) !important; }
+h1,h2,h3,h4 {
+    font-family: var(--mono) !important;
+    color: var(--text) !important;
+}
 
 /* ── Metric cards ── */
 [data-testid="stMetric"] {
-    background: var(--surface2) !important;
+    background: var(--surface) !important;
     border: 1px solid var(--border) !important;
     border-radius: 12px !important;
     padding: 20px 24px !important;
@@ -97,7 +100,7 @@ h1,h2,h3,h4 { font-family: var(--mono) !important; }
 
 /* ── Cards personalizadas ── */
 .kpi-card {
-    background: var(--surface2);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px 24px;
@@ -130,7 +133,7 @@ h1,h2,h3,h4 { font-family: var(--mono) !important; }
     font-family: 'Space Mono', monospace;
     font-size: 1.8rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text);
     line-height: 1.1;
 }
 .kpi-sub {
@@ -161,7 +164,7 @@ h1,h2,h3,h4 { font-family: var(--mono) !important; }
     text-transform: uppercase;
     color: #64748b;
     padding: 16px 0 8px 0;
-    border-top: 1px solid #252a3a;
+    border-top: 1px solid var(--border);
     margin-top: 8px;
 }
 
@@ -170,7 +173,7 @@ hr { border-color: #252a3a !important; }
 
 /* ── Alert boxes ── */
 .alert-box {
-    background: #1c2030;
+    background: var(--surface2);
     border-left: 3px solid var(--accent);
     padding: 12px 16px;
     border-radius: 0 8px 8px 0;
@@ -211,13 +214,13 @@ input[type="number"] {
 # ══════════════════════════════════════════════════════════
 st.markdown("""
 <div style="padding: 32px 0 16px 0;">
-  <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:3px; color:#64748b; text-transform:uppercase; margin-bottom:8px;">
+  <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">
     ⬡ ANÁLISIS ESTRUCTURAL · MODELO INSUMO-PRODUCTO
   </div>
-  <h1 style="font-family:'Space Mono',monospace; font-size:2.4rem; font-weight:700; color:#e2e8f0; margin:0; line-height:1.1;">
+  <h1 style="font-family:'Space Mono',monospace; font-size:2.4rem; font-weight:700; color:var(--text); margin:0; line-height:1.1;">
     Cluster Intelligence
   </h1>
-  <div style="color:#64748b; font-size:14px; margin-top:8px;">
+  <div style="color:var(--muted); font-size:14px; margin-top:8px;">
     Detección de comunidades económicas mediante la inversa de Leontief y el algoritmo de Louvain
   </div>
 </div>
@@ -511,7 +514,7 @@ with c_info:
         }.get(row["tipo"], "")
         rows_html += f"""
         <tr>
-          <td style="padding:8px 12px; font-family:'Space Mono',monospace; font-size:12px; color:#e2e8f0;">{row['sector']}</td>
+          <td style="padding:8px 12px; font-family:'Space Mono',monospace; font-size:12px; color:var(--text);">{row['sector']}</td>
           <td style="padding:8px 12px; text-align:right; color:#00e5ff; font-family:'Space Mono',monospace; font-size:12px;">{row['centralidad']:.5f}</td>
           <td style="padding:8px 12px; text-align:right; color:#94a3b8; font-size:12px;">{row['BL']:.3f}</td>
           <td style="padding:8px 12px; text-align:right; color:#94a3b8; font-size:12px;">{row['FL']:.3f}</td>
@@ -519,9 +522,9 @@ with c_info:
         </tr>
         """
     st.markdown(f"""
-    <table style="width:100%; border-collapse:collapse; background:#141720; border-radius:10px; overflow:hidden; border:1px solid #252a3a;">
+    <table style="width:100%; border-collapse:collapse; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #252a3a;">
       <thead>
-        <tr style="background:#1c2030;">
+        <tr style="background:#f1f5f9;">
           <th style="padding:10px 12px; text-align:left; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:#64748b;">SECTOR</th>
           <th style="padding:10px 12px; text-align:right; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:#64748b;">CENTRALIDAD</th>
           <th style="padding:10px 12px; text-align:right; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:#64748b;">BL</th>
@@ -548,9 +551,9 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 # ─── PALETA COMÚN ─────────────────────────────────────────
 PLOTLY_THEME = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Space Mono, monospace", color="#94a3b8", size=11),
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Space Mono, monospace", color="#334155", size=11),
     margin=dict(l=20, r=20, t=40, b=20),
 )
 
@@ -622,14 +625,14 @@ with tab1:
     hovertext=node_hover,
     hoverinfo="text",
     hoverlabel=dict(
-        bgcolor="#1c2030",
-        bordercolor="#252a3a",
-        font=dict(
-            family="Space Mono",
-            size=11,
-            color="#e2e8f0"
-        )
+    bgcolor="#ffffff",
+    bordercolor="#e2e8f0",
+    font=dict(
+        family="Space Mono",
+        size=11,
+        color="#0f172a"
     )
+)
 )
 
     fig_net = go.Figure(data=edge_traces + [node_trace])
@@ -667,9 +670,9 @@ with tab2:
             </tr>
             """
         st.markdown(f"""
-        <table style="width:100%; border-collapse:collapse; background:#141720; border-radius:10px; overflow:hidden; border:1px solid #252a3a;">
+        <table style="width:100%; border-collapse:collapse; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid var(--border);">
           <thead>
-            <tr style="background:#1c2030;">
+            <tr style="background:#f1f5f9;;">
               <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">#</th>
               <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">ID</th>
               <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">N</th>
