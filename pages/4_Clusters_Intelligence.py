@@ -65,10 +65,6 @@ input, textarea, select, button {
 [data-testid="stSidebar"] * {
     font-family: var(--sans) !important;
 }
-/* FORZAR TIPOGRAFÍA GLOBAL */
-[data-testid="stApp"] * {
-    font-family: var(--sans) !important;
-}
 
 /* Mantener títulos técnicos */
 h1, h2 {
