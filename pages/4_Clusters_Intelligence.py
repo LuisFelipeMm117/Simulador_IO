@@ -690,32 +690,10 @@ with tab2:
     with c_left:
         st.markdown("**Ranking de clusters por score estratégico**")
         # Tabla enriquecida
-        rows_html2 = ""
-        for _, row in summary.head(15).iterrows():
-            bar_w = int(row["score"] / summary["score"].max() * 100)
-            rows_html2 += f"""
-            <tr>
-              <td style="padding:7px 10px; font-family:'Space Mono',monospace; font-size:12px; color:#64748b;">#{int(row['rank'])}</td>
-              <td style="padding:7px 10px; font-family:'Space Mono',monospace; font-size:12px; color:#00e5ff;">C{int(row['cluster'])}</td>
-              <td style="padding:7px 10px; font-size:12px; color:#94a3b8;">{int(row['tamaño'])}</td>
-              <td style="padding:7px 10px; font-family:'Space Mono',monospace; font-size:11px; color:#0f172a;">
-              {row['score']:.4f}
-              </td>
-            </tr>
-            """
-        st.markdown(f"""
-        <table style="width:100%; border-collapse:collapse; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid var(--border);">
-          <thead>
-            <tr style="background:#f1f5f9;">
-              <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">#</th>
-              <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">ID</th>
-              <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">N</th>
-              <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">SCORE</th>
-            </tr>
-          </thead>
-          <tbody>{rows_html2}</tbody>
-        </table>
-        """, unsafe_allow_html=True)
+    st.dataframe(
+    summary.head(15)[["rank", "cluster", "tamaño", "score"]],
+    use_container_width=True
+)
 
     with c_right:
         # Bubble map
