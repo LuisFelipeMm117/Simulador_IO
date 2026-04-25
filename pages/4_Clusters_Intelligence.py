@@ -10,7 +10,7 @@ from pathlib import Path
 # ─────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────
-st.set_page_config(page_title="Clusters Intelligence", layout="wide")
+st.set_page_config(page_title="Cluster Intelligence", layout="wide")
 st.title("🏭 Cluster Intelligence")
 
 # ─────────────────────────────────────────────
@@ -27,7 +27,7 @@ resolution = st.sidebar.slider("Resolución Louvain", 0.5, 2.0, 1.0, 0.1)
 use_default = st.sidebar.checkbox("Usar datos precargados", value=True)
 
 # ─────────────────────────────────────────────
-# LOAD DATA (CORRECTO)
+# LOAD DATA
 # ─────────────────────────────────────────────
 def load_matrix(uploaded_file, default_path):
     try:
@@ -42,7 +42,6 @@ def load_matrix(uploaded_file, default_path):
         return None
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 A = load_matrix(uploaded_A, BASE_DIR / "data/A_nacional.npy")
 
 if A is None:
@@ -53,33 +52,26 @@ if A.shape[0] != A.shape[1]:
     st.error("La matriz A debe ser cuadrada")
     st.stop()
 
-n = A.shape[0]
-
 # ─────────────────────────────────────────────
-# CORE MODEL (ARREGLADO)
+# MODEL
 # ─────────────────────────────────────────────
 @st.cache_data
 def build_model(A, top_k, threshold, resolution):
-    
     n = A.shape[0]
     I = np.eye(n)
     M = I - A
 
-    # Validación numérica
     if np.linalg.cond(M) > 1e10:
         raise ValueError("Matriz mal condicionada")
 
     L = np.linalg.inv(M)
 
-    # Normalización
     col_sum = L.sum(axis=0, keepdims=True)
     col_sum[col_sum == 0] = 1
     W = L / col_sum
 
-    # Simetrización
     W_sym = (W + W.T) / 2
 
-    # Filtro
     W_f = np.zeros_like(W_sym)
     for i in range(n):
         idx = np.argsort(W_sym[i])[-top_k:]
@@ -87,14 +79,11 @@ def build_model(A, top_k, threshold, resolution):
 
     W_f[W_f < threshold] = 0
 
-    # Grafo
     G = nx.from_numpy_array(W_f)
     G.remove_nodes_from(list(nx.isolates(G)))
 
-    # Louvain
     partition = community_louvain.best_partition(G, resolution=resolution, random_state=42)
 
-    # Centralidad
     try:
         centrality = nx.eigenvector_centrality_numpy(G)
     except:
@@ -102,18 +91,9 @@ def build_model(A, top_k, threshold, resolution):
 
     modularity = community_louvain.modularity(partition, G)
 
-    return G, partition, centrality, L, modularity
+    return G, partition, centrality, L
 
-# ─────────────────────────────────────────────
-# RUN MODEL
-# ─────────────────────────────────────────────
-try:
-    G, partition, centrality, L, modularity = build_model(
-        A, top_k, threshold, resolution
-    )
-except Exception as e:
-    st.error(f"Error en modelo: {e}")
-    st.stop()
+G, partition, centrality, L = build_model(A, top_k, threshold, resolution)
 
 # ─────────────────────────────────────────────
 # DATAFRAME
@@ -124,19 +104,7 @@ df = pd.DataFrame({
     "centrality": [centrality.get(i, 0) for i in G.nodes()],
 })
 
-# ─────────────────────────────────────────────
-# METRICS
-# ─────────────────────────────────────────────
-c1, c2, c3 = st.columns(3)
-c1.metric("Nodos", G.number_of_nodes())
-c2.metric("Clusters", df["cluster"].nunique())
-c3.metric("Modularidad", f"{modularity:.4f}")
-
-st.divider()
-
-# ─────────────────────────────────────────────
-# CLUSTER SUMMARY
-# ─────────────────────────────────────────────
+# Cluster summary
 summary = (
     df.groupby("cluster")
     .agg(
@@ -144,25 +112,76 @@ summary = (
         centralidad_media=("centrality", "mean")
     )
     .reset_index()
-    .sort_values("centralidad_media", ascending=False)
 )
 
-st.subheader("📊 Ranking de Clusters")
-st.dataframe(summary, use_container_width=True)
+summary["score"] = (
+    summary["centralidad_media"] * 0.6 +
+    (summary["tamaño"] / summary["tamaño"].max()) * 0.4
+)
 
-fig = px.bar(
+summary = summary.sort_values("score", ascending=False)
+summary["rank"] = range(1, len(summary) + 1)
+
+# ─────────────────────────────────────────────
+# HEADER METRICS
+# ─────────────────────────────────────────────
+c1, c2, c3 = st.columns(3)
+c1.metric("Sectores activos", G.number_of_nodes())
+c2.metric("Clusters detectados", df["cluster"].nunique())
+c3.metric("Centralidad promedio", f"{df['centrality'].mean():.4f}")
+
+st.markdown("💡 **Insight:** La estructura económica se organiza en clusters con distinta influencia sistémica.")
+
+# ─────────────────────────────────────────────
+# TOP CLUSTER
+# ─────────────────────────────────────────────
+top_cluster = summary.iloc[0]
+
+st.subheader("🏆 Cluster más estratégico")
+st.markdown(f"""
+- **Cluster:** {top_cluster['cluster']}
+- **Tamaño:** {top_cluster['tamaño']} sectores  
+- **Score:** {top_cluster['score']:.4f}  
+
+👉 Este cluster concentra la mayor influencia dentro del sistema económico.
+""")
+
+# ─────────────────────────────────────────────
+# 🔥 BUBBLE GRAPH (WOW)
+# ─────────────────────────────────────────────
+st.subheader("🌐 Mapa de influencia de clusters")
+
+fig_bubble = px.scatter(
     summary,
-    x="cluster",
-    y="tamaño",
-    color="centralidad_media",
-    title="Clusters por tamaño e importancia"
+    x="tamaño",
+    y="centralidad_media",
+    size="score",
+    color="cluster",
+    hover_name="cluster",
+    title="Clusters: tamaño vs influencia",
+    labels={
+        "tamaño": "Número de sectores",
+        "centralidad_media": "Influencia promedio"
+    },
+    size_max=60
 )
-st.plotly_chart(fig, use_container_width=True)
+
+fig_bubble.update_layout(height=500)
+st.plotly_chart(fig_bubble, use_container_width=True)
+
+# ─────────────────────────────────────────────
+# RANKING
+# ─────────────────────────────────────────────
+st.subheader("📊 Ranking de Clusters")
+st.dataframe(
+    summary[["rank", "cluster", "tamaño", "centralidad_media", "score"]],
+    use_container_width=True
+)
 
 # ─────────────────────────────────────────────
 # TOP NODES
 # ─────────────────────────────────────────────
 st.subheader("🔥 Sectores más importantes")
 
-top_nodes = df.sort_values("centrality", ascending=False).head(15)
+top_nodes = df.sort_values("centrality", ascending=False).head(10)
 st.dataframe(top_nodes, use_container_width=True)
