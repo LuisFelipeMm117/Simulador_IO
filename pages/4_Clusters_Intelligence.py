@@ -333,7 +333,7 @@ if len(df_lab) != n_sectors:
     st.error(f"El CSV tiene {len(df_lab)} filas pero la matriz tiene {n_sectors}")
     st.stop()
 
-labels = df_lab["sector"].astype(str).tolist()
+labels = df_lab["nombre"].astype(str).tolist()
 
 # ══════════════════════════════════════════════════════════
 # FUNCIONES MATEMÁTICAS CORREGIDAS
