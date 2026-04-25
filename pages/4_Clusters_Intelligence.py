@@ -53,6 +53,15 @@ st.markdown("""
 [data-testid="stApp"] {
     font-family: var(--sans) !important;
 }
+/* FORZAR TIPOGRAFÍA GLOBAL */
+[data-testid="stApp"] * {
+    font-family: var(--sans) !important;
+}
+
+/* Mantener títulos técnicos */
+h1, h2 {
+    font-family: var(--mono) !important;
+}
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
