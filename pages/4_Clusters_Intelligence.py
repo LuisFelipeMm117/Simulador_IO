@@ -50,7 +50,19 @@ st.markdown("""
 }
 
 /* Solo estiliza componentes, NO fondo global */
-[data-testid="stApp"] {
+/* Tipografía SOLO en texto visible */
+body, p, span, label, div {
+    font-family: var(--sans) !important;
+}
+
+/* Inputs y widgets */
+input, textarea, select, button {
+    font-family: var(--sans) !important;
+}
+[data-testid="stFileUploader"] button {
+    font-family: var(--sans) !important;
+}
+[data-testid="stSidebar"] * {
     font-family: var(--sans) !important;
 }
 /* FORZAR TIPOGRAFÍA GLOBAL */
