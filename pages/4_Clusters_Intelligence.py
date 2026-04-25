@@ -51,7 +51,22 @@ st.markdown("""
 
 /* Solo estiliza componentes, NO fondo global */
 /* Tipografía SOLO en texto visible */
-body, p, span, label, div {
+/* SOLO TEXTO CONTROLADO */
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] span,
+[data-testid="stMarkdownContainer"] div {
+    font-family: var(--sans) !important;
+}
+
+/* Inputs y controles */
+input, textarea, select {
+    font-family: var(--sans) !important;
+}
+
+/* Sidebar texto */
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] p {
     font-family: var(--sans) !important;
 }
 
