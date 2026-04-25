@@ -317,10 +317,10 @@ if A.ndim != 2 or A.shape[0] != A.shape[1]:
 n_sectors = A.shape[0]
 
 # Etiquetas
-labels_path = BASE_DIR / "etiquetas_sectores.csv"
+labels_path = BASE_DIR / "sectores.csv"
 
 if not labels_path.exists():
-    st.error("No se encontró etiquetas_sectores.csv en el repo")
+    st.error("No se encontró sectores.csv en el repo")
     st.stop()
 
 df_lab = pd.read_csv(labels_path)
