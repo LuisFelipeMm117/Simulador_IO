@@ -689,11 +689,10 @@ with tab2:
 
     with c_left:
         st.markdown("**Ranking de clusters por score estratégico**")
-        # Tabla enriquecida
-    st.dataframe(
-        summary.head(15)[["rank", "cluster", "tamaño", "score"]],
-        use_container_width=True
-    )
+        st.dataframe(
+            summary.head(15)[["rank", "cluster", "tamaño", "score"]],
+            use_container_width=True
+        )
 
     with c_right:
         # Bubble map
