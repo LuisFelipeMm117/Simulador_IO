@@ -5,7 +5,7 @@ Modelo Insumo-Producto · Detección de Comunidades Louvain
 """
 
 import numpy as np
-import pandas as pd
+import pandas as fpd
 import networkx as nx
 import community as community_louvain
 import plotly.express as px
@@ -51,12 +51,8 @@ st.markdown("""
 /* ───── TIPOGRAFÍA LIMPIA (SIN ROMPER STREAMLIT) ───── */
 
 /* Texto normal */
-/* SOLO texto visible, NO internals de Streamlit */
-.stMarkdown p,
-.stMarkdown span,
-label {
-    font-family: var(--sans) !important;
-}
+/* SOLO texto visible, NO internals de Streamlit, aqui iba st.Markdown */
+
 
 /* Sidebar SOLO texto (no componentes internos) */
 [data-testid="stSidebar"] label,
@@ -65,12 +61,10 @@ label {
 }
 
 /* Inputs seguros (sin botones) */
-/* Inputs controlados únicamente */
+/* Inputs controlados únicamente aqui ib stSelect */
 .stTextInput input,
 .stNumberInput input,
-.stSelectbox div {
-    font-family: var(--sans) !important;
-}
+
 
 /* Títulos */
 h1, h2, h3, h4 {
@@ -78,7 +72,7 @@ h1, h2, h3, h4 {
 }
 
 /* FIX uploader (CRÍTICO) */
-[data-testid="stFileUploader"] label {
+[C] label {
     font-family: var(--sans) !important;
 }
 
@@ -95,11 +89,7 @@ h1, h2, h3, h4 {
     font-family: var(--sans) !important;
 }
 
-[data-testid="stFileUploader"] div {
-    font-family: var(--sans) !important;
-}
-
-/* ── SLIDER LIMPIO ── */
+/* ── SLIDER LIMPIO ── * arruba uba stfile/
 
 /* Track (fondo) */
 .stSlider > div > div > div > div {
