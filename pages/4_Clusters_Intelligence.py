@@ -5,7 +5,7 @@ Modelo Insumo-Producto · Detección de Comunidades Louvain
 """
 
 import numpy as np
-import pandas as fpd
+import pandas as pd
 import networkx as nx
 import community as community_louvain
 import plotly.express as px
