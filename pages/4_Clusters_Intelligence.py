@@ -4,6 +4,7 @@ import pandas as pd
 import networkx as nx
 import community as community_louvain
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 from pathlib import Path
 
@@ -91,9 +92,16 @@ def build_model(A, top_k, threshold, resolution):
 
     modularity = community_louvain.modularity(partition, G)
 
-    return G, partition, centrality, L
+    return G, partition, centrality, L, modularity
 
-G, partition, centrality, L = build_model(A, top_k, threshold, resolution)
+# RUN
+try:
+    G, partition, centrality, L, modularity = build_model(
+        A, top_k, threshold, resolution
+    )
+except Exception as e:
+    st.error(f"Error en modelo: {e}")
+    st.stop()
 
 # ─────────────────────────────────────────────
 # DATAFRAME
@@ -104,7 +112,6 @@ df = pd.DataFrame({
     "centrality": [centrality.get(i, 0) for i in G.nodes()],
 })
 
-# Cluster summary
 summary = (
     df.groupby("cluster")
     .agg(
@@ -123,14 +130,14 @@ summary = summary.sort_values("score", ascending=False)
 summary["rank"] = range(1, len(summary) + 1)
 
 # ─────────────────────────────────────────────
-# HEADER METRICS
+# HEADER
 # ─────────────────────────────────────────────
 c1, c2, c3 = st.columns(3)
 c1.metric("Sectores activos", G.number_of_nodes())
 c2.metric("Clusters detectados", df["cluster"].nunique())
-c3.metric("Centralidad promedio", f"{df['centrality'].mean():.4f}")
+c3.metric("Modularidad", f"{modularity:.3f}")
 
-st.markdown("💡 **Insight:** La estructura económica se organiza en clusters con distinta influencia sistémica.")
+st.markdown("💡 **Insight:** La economía se organiza en clusters con distinta influencia sistémica.")
 
 # ─────────────────────────────────────────────
 # TOP CLUSTER
@@ -143,13 +150,13 @@ st.markdown(f"""
 - **Tamaño:** {top_cluster['tamaño']} sectores  
 - **Score:** {top_cluster['score']:.4f}  
 
-👉 Este cluster concentra la mayor influencia dentro del sistema económico.
+👉 Este cluster concentra la mayor influencia dentro del sistema.
 """)
 
 # ─────────────────────────────────────────────
-# 🔥 BUBBLE GRAPH (WOW)
+# BUBBLE GRAPH
 # ─────────────────────────────────────────────
-st.subheader("🌐 Mapa de influencia de clusters")
+st.subheader("🌐 Mapa de influencia (clusters)")
 
 fig_bubble = px.scatter(
     summary,
@@ -158,11 +165,6 @@ fig_bubble = px.scatter(
     size="score",
     color="cluster",
     hover_name="cluster",
-    title="Clusters: tamaño vs influencia",
-    labels={
-        "tamaño": "Número de sectores",
-        "centralidad_media": "Influencia promedio"
-    },
     size_max=60
 )
 
@@ -170,18 +172,87 @@ fig_bubble.update_layout(height=500)
 st.plotly_chart(fig_bubble, use_container_width=True)
 
 # ─────────────────────────────────────────────
+# 🔥 NETWORK GRAPH
+# ─────────────────────────────────────────────
+st.subheader("🕸️ Red de influencia económica")
+
+top_nodes = sorted(centrality, key=centrality.get, reverse=True)[:40]
+sub_G = G.subgraph(top_nodes)
+
+pos = nx.spring_layout(sub_G, seed=42, k=1.5)
+
+# EDGES
+edge_x, edge_y = [], []
+for u, v in sub_G.edges():
+    x0, y0 = pos[u]
+    x1, y1 = pos[v]
+    edge_x += [x0, x1, None]
+    edge_y += [y0, y1, None]
+
+edge_trace = go.Scatter(
+    x=edge_x,
+    y=edge_y,
+    mode="lines",
+    line=dict(width=0.7, color="#888"),
+    hoverinfo="none"
+)
+
+# NODES
+node_x, node_y, node_size, node_color, node_text = [], [], [], [], []
+
+for node in sub_G.nodes():
+    x, y = pos[node]
+    node_x.append(x)
+    node_y.append(y)
+    node_size.append(20 + centrality[node] * 80)
+    node_color.append(partition[node])
+    node_text.append(f"Sector {node}<br>Cluster {partition[node]}")
+
+node_trace = go.Scatter(
+    x=node_x,
+    y=node_y,
+    mode="markers+text",
+    text=[str(n) for n in sub_G.nodes()],
+    textposition="top center",
+    hovertext=node_text,
+    hoverinfo="text",
+    marker=dict(
+        showscale=True,
+        colorscale="Turbo",
+        color=node_color,
+        size=node_size,
+        line_width=1
+    )
+)
+
+fig_net = go.Figure(data=[edge_trace, node_trace])
+
+fig_net.update_layout(
+    title="Red económica (sectores más influyentes)",
+    showlegend=False,
+    hovermode="closest",
+    margin=dict(b=20, l=5, r=5, t=40),
+    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+    height=650
+)
+
+st.plotly_chart(fig_net, use_container_width=True)
+
+# ─────────────────────────────────────────────
 # RANKING
 # ─────────────────────────────────────────────
 st.subheader("📊 Ranking de Clusters")
+
 st.dataframe(
     summary[["rank", "cluster", "tamaño", "centralidad_media", "score"]],
     use_container_width=True
 )
 
 # ─────────────────────────────────────────────
-# TOP NODES
+# TOP SECTORS
 # ─────────────────────────────────────────────
 st.subheader("🔥 Sectores más importantes")
 
-top_nodes = df.sort_values("centrality", ascending=False).head(10)
-st.dataframe(top_nodes, use_container_width=True)
+top_nodes_df = df.sort_values("centrality", ascending=False).head(10)
+st.dataframe(top_nodes_df, use_container_width=True)
