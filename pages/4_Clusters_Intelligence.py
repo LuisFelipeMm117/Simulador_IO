@@ -48,40 +48,24 @@ st.markdown("""
     --ok:   #10b981;
     --warn: #ef4444;
 }
+/* TIPOGRAFÍA SEGURA */
 
-/* Solo estiliza componentes, NO fondo global */
-/* Tipografía SOLO en texto visible */
-/* SOLO TEXTO CONTROLADO */
-[data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] span,
-[data-testid="stMarkdownContainer"] div {
-    font-family: var(--sans) !important;
-}
+/* Markdown */
 
-/* Inputs y controles */
+/* Inputs normales */
 input, textarea, select {
     font-family: var(--sans) !important;
 }
 
-/* Sidebar texto */
+/* Sidebar SOLO texto */
 [data-testid="stSidebar"] label,
 [data-testid="stSidebar"] span,
-[data-testid="stSidebar"] p {
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] span {
     font-family: var(--sans) !important;
 }
 
-/* Inputs y widgets */
-input, textarea, select, button {
-    font-family: var(--sans) !important;
-}
-[data-testid="stFileUploader"] button {
-    font-family: var(--sans) !important;
-}
-[data-testid="stSidebar"] * {
-    font-family: var(--sans) !important;
-}
-
-/* Mantener títulos técnicos */
+/* Títulos */
 h1, h2 {
     font-family: var(--mono) !important;
 }
@@ -90,7 +74,14 @@ h1, h2 {
     background: var(--surface) !important;
     border-right: 1px solid var(--border) !important;
 }
-[data-testid="stSidebar"] * { color: var(--text) !important; }
+
+[data-testid="stFileUploader"] button {
+    font-family: var(--sans) !important;
+}
+
+[data-testid="stFileUploader"] div {
+    font-family: var(--sans) !important;
+}
 
 /* ── SLIDER LIMPIO ── */
 
