@@ -46,9 +46,10 @@ st.markdown("""
     --sans:      'DM Sans', sans-serif;
 }
 
-html, body, [data-testid="stApp"] {
-    background-color: var(--bg) !important;
-    color: var(--text) !important;
+/* Solo estiliza componentes, NO fondo global */
+[data-testid="stApp"] {
+    font-family: var(--sans) !important;
+}
     font-family: var(--sans) !important;
 }
 
