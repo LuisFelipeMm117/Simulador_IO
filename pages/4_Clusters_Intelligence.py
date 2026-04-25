@@ -725,7 +725,7 @@ with tab2:
         st.markdown(f"""
         <table style="width:100%; border-collapse:collapse; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid var(--border);">
           <thead>
-            <tr style="background:#f1f5f9;;">
+            <tr style="background:#f1f5f9;">
               <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">#</th>
               <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">ID</th>
               <th style="padding:8px 10px; text-align:left; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:#64748b;">N</th>
