@@ -269,7 +269,6 @@ st.markdown("""
 with st.sidebar:
     st.markdown('<div class="section-title">📂 Datos de entrada</div>', unsafe_allow_html=True)
     uploaded_A = st.file_uploader("Matriz A (.npy)", type=["npy"])
-    uploaded_labels = st.file_uploader("Etiquetas sectores (.csv)", type=["csv"], help="CSV con columna 'sector'")
 
     st.markdown('<div class="section-title">⚙️ Parámetros del modelo</div>', unsafe_allow_html=True)
     top_k = st.slider("Top-K conexiones por nodo", 3, 20, 10,
@@ -318,16 +317,23 @@ if A.ndim != 2 or A.shape[0] != A.shape[1]:
 n_sectors = A.shape[0]
 
 # Etiquetas
-sector_labels = None
-if uploaded_labels is not None:
-    try:
-        df_lab = pd.read_csv(uploaded_labels)
-        if "sector" in df_lab.columns and len(df_lab) == n_sectors:
-            sector_labels = df_lab["sector"].tolist()
-    except Exception:
-        pass
+labels_path = BASE_DIR / "etiquetas_sectores.csv"
 
-labels = sector_labels if sector_labels else [f"S{i}" for i in range(n_sectors)]
+if not labels_path.exists():
+    st.error("No se encontró etiquetas_sectores.csv en el repo")
+    st.stop()
+
+df_lab = pd.read_csv(labels_path)
+
+if "sector" not in df_lab.columns:
+    st.error("El CSV debe tener una columna llamada 'sector'")
+    st.stop()
+
+if len(df_lab) != n_sectors:
+    st.error(f"El CSV tiene {len(df_lab)} filas pero la matriz tiene {n_sectors}")
+    st.stop()
+
+labels = df_lab["sector"].astype(str).tolist()
 
 # ══════════════════════════════════════════════════════════
 # FUNCIONES MATEMÁTICAS CORREGIDAS
