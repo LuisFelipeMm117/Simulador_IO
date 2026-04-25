@@ -701,10 +701,27 @@ with tab2:
             hoverlabel=dict(bgcolor="#1c2030", bordercolor="#252a3a",
                             font=dict(family="Space Mono", size=11)),
         )
-        fig_bubble.update_layout(height=500, **PLOTLY_THEME,
-            coloraxis_colorbar=dict(thickness=12, len=0.6,
-                tickfont=dict(family="Space Mono", size=9, color="#64748b"),
-                titlefont=dict(family="Space Mono", size=9, color="#64748b")))
+        fig_bubble.update_layout(
+            height=500,
+            **PLOTLY_THEME,
+            coloraxis_colorbar=dict(
+                title=dict(
+                    text="Score",
+                    font=dict(
+                        family="Space Mono",
+                        size=9,
+                        color="#64748b"
+                    )
+                ),
+                thickness=12,
+                len=0.6,
+                tickfont=dict(
+                    family="Space Mono",
+                    size=9,
+                    color="#64748b"
+                )
+            )
+        )
         st.plotly_chart(fig_bubble, use_container_width=True)
 
         # Explorador de cluster individual
