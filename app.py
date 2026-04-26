@@ -40,7 +40,7 @@ st.markdown("""
 
 @st.cache_resource(show_spinner="Cargando modelo económico…")
 def cargar_modelo() -> ModeloEconomico:
-    return ModeloEconomico("data/")
+    return ModeloEconomico("data2/")
 
 modelo = cargar_modelo()
 
