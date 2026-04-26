@@ -22,6 +22,24 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+st.markdown("""
+<style>
+    [data-testid="stMetricValue"] { font-size: 1.4rem; font-weight: 700; }
+    [data-testid="stMetricLabel"] { font-size: 0.8rem; color: #555; }
+    .block-container { padding-top: 1.5rem; }
+    .stAlert { border-radius: 8px; }
+
+    /* 🔴 OCULTAR BOTONES DE GITHUB / SHARE */
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {display: none;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
+
+    /* Opcional: también quita el footer de Streamlit */
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════
 # CSS — DISEÑO PREMIUM (DARK INDUSTRIAL)
