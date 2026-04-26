@@ -139,7 +139,8 @@ class ModeloEconomico:
 
         d = self._load_estado(estado_key)
         L, e, X = d["L"], d["e"], d["X"]
-        v = self.v_n   # coeficiente VA nacional (v estatal = 1 por construcción)
+        #v = self.v_n   coeficiente VA nacional (v estatal = 1 por construcción)
+        v = d["v"]
 
         # Convertir pesos a Mmdp (unidad del modelo)
         monto_mmdp = monto_pesos * MXN_A_MMDP
