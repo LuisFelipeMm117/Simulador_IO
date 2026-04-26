@@ -8,6 +8,23 @@ import pandas as pd
 from loader import ModeloEconomico
 
 st.set_page_config(page_title="Comparación por Estado", layout="wide", page_icon="🗺")
+st.markdown("""
+<style>
+    [data-testid="stMetricValue"] { font-size: 1.4rem; font-weight: 700; }
+    [data-testid="stMetricLabel"] { font-size: 0.8rem; color: #555; }
+    .block-container { padding-top: 1.5rem; }
+    .stAlert { border-radius: 8px; }
+
+    /* 🔴 OCULTAR BOTONES DE GITHUB / SHARE */
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {display: none;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
+
+    /* Opcional: también quita el footer de Streamlit */
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource(show_spinner=False)
 def cargar_modelo():
@@ -34,48 +51,79 @@ with monto_col:
 
 if st.button("▶ Comparar estados", type="primary"):
     with st.spinner("Ejecutando simulación en los 32 estados…"):
-        df_comp = modelo.comparar_estados(sector_idx, monto)
+        st.session_state["df_comp"] = modelo.comparar_estados(sector_idx, monto)
 
-    if df_comp.empty:
-        st.warning("El sector seleccionado no tiene actividad en ningún estado.")
-        st.stop()
+# ── cargar datos persistentes ─────────────────────────
+df_comp = st.session_state.get("df_comp")
 
+if df_comp is None:
+    st.info("Ejecuta la simulación para ver resultados")
+elif df_comp.empty:
+    st.warning("El sector seleccionado no tiene actividad en ningún estado.")
+else:
     st.success(f"Comparando **{len(df_comp)} estados** con un shock de ${monto:,.0f} MXN en **{sector_name}**")
-    st.divider()
 
-    # ── Tabs ──────────────────────────────────────────────────────────────
-    t1, t2, t3 = st.tabs(["📈 Multiplicadores", "💰 Impacto Absoluto", "📋 Tabla"])
+st.divider()
 
+# ── Tabs ──────────────────────────────────────────────────────────────
+t1, t2, t3 = st.tabs(["📈 Multiplicadores", "💰 Impacto Absoluto", "📋 Tabla"])
+
+if df_comp is None:
+    st.info("Ejecuta la simulación para ver resultados")
+
+elif df_comp.empty:
+    st.warning("El sector seleccionado no tiene actividad en ningún estado.")
+else:
     with t1:
         col1, col2 = st.columns(2)
+
         with col1:
             st.markdown("#### Multiplicador de producción por estado")
-            ch = alt.Chart(df_comp).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
-                x=alt.X("mult_produccion:Q", title="Multiplicador producción",
-                         scale=alt.Scale(domain=[1, df_comp["mult_produccion"].max()*1.05])),
+
+            min_v = df_comp["mult_produccion"].min()
+            max_v = df_comp["mult_produccion"].max()
+            padding = (max_v - min_v) * 0.05 if max_v > min_v else 0.05
+
+            ch = alt.Chart(df_comp).mark_bar(
+                cornerRadiusTopLeft=4,
+                cornerRadiusTopRight=4
+            ).encode(
+                x=alt.X(
+                    "mult_produccion:Q",
+                    title="Multiplicador producción",
+                    scale=alt.Scale(domain=[max(0, min_v - padding), max_v + padding])
+                ),
                 y=alt.Y("estado:N", sort="-x", title=None),
                 color=alt.Color("mult_produccion:Q", scale=alt.Scale(scheme="blues"), legend=None),
                 tooltip=[
                     alt.Tooltip("estado:N", title="Estado"),
-                    alt.Tooltip("mult_produccion:Q", title="Mult. producción", format=".4f"),
-                    alt.Tooltip("mult_ingreso:Q", title="Mult. ingreso", format=".4f"),
+                    alt.Tooltip("mult_produccion:Q", format=".4f"),
+                    alt.Tooltip("mult_ingreso:Q", format=".4f"),
                 ]
             ).properties(height=680)
-            st.altair_chart(ch, use_container_width=True)
 
+            st.altair_chart(ch, use_container_width=True)
         with col2:
             st.markdown("#### Multiplicador de ingreso (valor agregado) por estado")
-            ch2 = alt.Chart(df_comp).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
+
+            ch2 = alt.Chart(df_comp).mark_bar(
+                cornerRadiusTopLeft=4,
+                cornerRadiusTopRight=4
+            ).encode(
                 x=alt.X("mult_ingreso:Q", title="Multiplicador ingreso"),
                 y=alt.Y("estado:N", sort="-x", title=None),
-                color=alt.Color("mult_ingreso:Q", scale=alt.Scale(scheme="greens"), legend=None),
+                color=alt.Color(
+                    "mult_ingreso:Q",
+                    scale=alt.Scale(scheme="greens"),
+                    legend=None
+                ),
                 tooltip=[
                     alt.Tooltip("estado:N"),
                     alt.Tooltip("mult_ingreso:Q", format=".4f"),
                 ]
             ).properties(height=680)
-            st.altair_chart(ch2, use_container_width=True)
 
+            st.altair_chart(ch2, use_container_width=True)
     with t2:
         col3, col4 = st.columns(2)
         with col3:

@@ -9,6 +9,23 @@ import pandas as pd
 from loader import ModeloEconomico
 
 st.set_page_config(page_title="Panorama Estatal", layout="wide", page_icon="🔍")
+st.markdown("""
+<style>
+    [data-testid="stMetricValue"] { font-size: 1.4rem; font-weight: 700; }
+    [data-testid="stMetricLabel"] { font-size: 0.8rem; color: #555; }
+    .block-container { padding-top: 1.5rem; }
+    .stAlert { border-radius: 8px; }
+
+    /* 🔴 OCULTAR BOTONES DE GITHUB / SHARE */
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {display: none;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
+
+    /* Opcional: también quita el footer de Streamlit */
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource(show_spinner=False)
 def cargar_modelo():
@@ -90,7 +107,7 @@ with t1:
 # ── TAB 2: Multiplicadores ────────────────────────────────────────────────────
 with t2:
     mult_prod = d["L"].sum(axis=0)
-    mult_ing  = d["v"] * mult_prod
+    mult_ing  = modelo.v_n * mult_prod
 
     df_mult = pd.DataFrame({
         "scian":    modelo.sectores,
@@ -129,27 +146,40 @@ with t3:
     FLQ = d["FLQ"]
     activos_idx = np.where(d["VA_r"] > 0)[0]
     FLQ_sub = FLQ[np.ix_(activos_idx, activos_idx)]
-    nombres_activos = [modelo.sector_names[modelo.sectores[i]][:25] for i in activos_idx]
+    nombres_activos = [
+        f"{modelo.sector_names[modelo.sectores[i]][:20]}_{i}"
+        for i in activos_idx
+]
 
     st.markdown("#### Matriz FLQ (sectores activos)")
     st.caption("FLQ_ij: fracción del coeficiente técnico nacional satisfecha localmente. 1 = abastecimiento local completo.")
 
     df_flq_heat = pd.DataFrame(FLQ_sub, index=nombres_activos, columns=nombres_activos)
-    st.dataframe(df_flq_heat.style.background_gradient(cmap="YlOrRd", vmin=0, vmax=1)
-                 .format("{:.3f}"), use_container_width=True, height=500)
+    df_flq_heat = df_flq_heat.fillna(0)
 
-    # Diagonal (LQ sectorial promedio)
+    st.dataframe(df_flq_heat, use_container_width=True, height=500)
+
+    # ── Diagonal ─────────────────────────
     st.markdown("#### LQ diagonal promedio por sector")
+
     diag = pd.DataFrame({
         "nombre": nombres_activos,
         "FLQ_diag": np.diag(FLQ_sub)
     }).sort_values("FLQ_diag", ascending=False)
-    ch5 = alt.Chart(diag.head(20)).mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
+
+    ch5 = alt.Chart(diag.head(20)).mark_bar(
+        cornerRadiusTopLeft=3,
+        cornerRadiusTopRight=3
+    ).encode(
         x=alt.X("FLQ_diag:Q", title="FLQ diagonal", scale=alt.Scale(domain=[0,1])),
         y=alt.Y("nombre:N", sort="-x", title=None),
         color=alt.Color("FLQ_diag:Q", scale=alt.Scale(scheme="oranges"), legend=None),
-        tooltip=[alt.Tooltip("nombre:N"), alt.Tooltip("FLQ_diag:Q", format=".4f")]
+        tooltip=[
+            alt.Tooltip("nombre:N"),
+            alt.Tooltip("FLQ_diag:Q", format=".4f")
+        ]
     ).properties(height=420)
+
     st.altair_chart(ch5, use_container_width=True)
 
 # ── TAB 4: Comparativa nacional ───────────────────────────────────────────────
