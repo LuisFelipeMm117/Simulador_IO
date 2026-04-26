@@ -9,6 +9,23 @@ import pandas as pd
 from loader import ModeloEconomico
 
 st.set_page_config(page_title="Panorama Estatal", layout="wide", page_icon="🔍")
+st.markdown("""
+<style>
+    [data-testid="stMetricValue"] { font-size: 1.4rem; font-weight: 700; }
+    [data-testid="stMetricLabel"] { font-size: 0.8rem; color: #555; }
+    .block-container { padding-top: 1.5rem; }
+    .stAlert { border-radius: 8px; }
+
+    /* 🔴 OCULTAR BOTONES DE GITHUB / SHARE */
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {display: none;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
+
+    /* Opcional: también quita el footer de Streamlit */
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource(show_spinner=False)
 def cargar_modelo():
