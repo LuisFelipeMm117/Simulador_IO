@@ -467,7 +467,7 @@ elif module == MODULE_LABELS[1]:
 
     with st.sidebar:
         st.markdown('<div class="section-title">📂 Datos — MIP Nacional</div>', unsafe_allow_html=True)
-        uploaded_mip = st.file_uploader("MIP Nacional (.csv)", type=["csv"], key="m2_mip")
+        uploaded_mip = st.file_uploader("MIP Nacional (.csv / .xlsm)", type=["csv", "xlsm", "xlsx"], key="m2_mip")
         st.markdown('<div class="section-title">⚙️ Parámetros</div>', unsafe_allow_html=True)
         num_sectors_m2  = st.number_input("Número de sectores", 5, 200, 20, key="m2_ns")
         threshold_pct_m2 = st.slider("Percentil de umbral (%)", 50, 95, 75, key="m2_thresh",
@@ -494,10 +494,20 @@ elif module == MODULE_LABELS[1]:
         st.stop()
 
     @st.cache_data
-    def build_wiod_model(file_bytes: bytes, num_sectors: int,
-                         threshold_pct: float, resolution: float):
+    def build_wiod_model(
+    file_bytes: bytes,
+    filename: str,
+    num_sectors: int,
+    threshold_pct: float,
+    resolution: float):
+      
         import io
-        df_national = pd.read_csv(io.BytesIO(file_bytes), sep=',', index_col='Concepto')
+
+        if filename.endswith((".xlsm", ".xlsx")):
+          df_national = pd.read_excel(io.BytesIO(file_bytes), index_col='Concepto')
+        else:
+          df_national = pd.read_csv(io.BytesIO(file_bytes), sep=',', index_col='Concepto')
+
         sector_names_raw = df_national.index[:num_sectors]
         sector_names     = [str(s)[:30] + ("..." if len(str(s)) > 30 else "") for s in sector_names_raw]
 
@@ -562,7 +572,7 @@ elif module == MODULE_LABELS[1]:
 
     file_bytes = uploaded_mip.read()
     try:
-        m2 = build_wiod_model(file_bytes, num_sectors_m2, threshold_pct_m2, resolution_m2)
+        m2 = build_wiod_model(file_bytes, uploaded_mip.name, num_sectors_m2, threshold_pct_m2, resolution_m2)
     except KeyError as ke:
         st.error(f"No se encontró la fila esperada en el CSV: {ke}")
         st.stop()
