@@ -744,7 +744,7 @@ elif module == MODULE_LABELS[2]:
         st.markdown('<div class="section-title">📂 Datos Regionales</div>', unsafe_allow_html=True)
 
         # ── NUEVO: selector automático de estado ──────────────────
-        discovered = _discover_states(BASE_DIR / "data2")
+        discovered = _discover_states(BASE_DIR.parent() / "data2")
 
         if discovered:
             state_options = list(discovered.keys())
