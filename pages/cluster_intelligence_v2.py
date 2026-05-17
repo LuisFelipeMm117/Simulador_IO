@@ -1019,7 +1019,7 @@ elif module == MODULE_LABELS[2]:
             y=[pos_r[nd][1] for nd in sub_r.nodes()],
             mode="markers+text",
             marker=dict(
-                size=16,
+                size=[12 + deg_r[nd]*80 for nd in sub_r.nodes()],
                 color=[int(partition_r[nd]) for nd in sub_r.nodes()],
                 colorscale="Turbo", showscale=True,
                 colorbar=dict(title=dict(text="Cluster", font=dict(family="Space Mono", size=9))),
