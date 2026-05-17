@@ -7,3 +7,4 @@ matplotlib>=3.8.0
 networkx>=3.0
 python-louvain>=0.16
 plotly>=5.0
+openpyxl
