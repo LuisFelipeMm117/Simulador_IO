@@ -501,12 +501,37 @@ elif module == MODULE_LABELS[1]:
     threshold_pct: float,
     resolution: float):
       
-        import io
+    import io
 
-        if filename.endswith((".xlsm", ".xlsx")):
-          df_national = pd.read_excel(io.BytesIO(file_bytes), index_col='Concepto')
-        else:
-          df_national = pd.read_csv(io.BytesIO(file_bytes), sep=',', index_col='Concepto')
+    # ─────────────────────────────────────────────
+    # CARGA FLEXIBLE CSV / XLSX / XLSM
+    # ─────────────────────────────────────────────
+    if filename.endswith((".xlsm", ".xlsx")):
+        df_national = pd.read_excel(io.BytesIO(file_bytes))
+    else:
+        df_national = pd.read_csv(io.BytesIO(file_bytes), sep=',')
+
+    # limpiar nombres de columnas
+    df_national.columns = [str(c).strip() for c in df_national.columns]
+
+    # detectar columna índice automáticamente
+    possible_cols = ["Concepto", "concepto", "Sector", "sector"]
+
+    idx_col = None
+    for c in possible_cols:
+        if c in df_national.columns:
+            idx_col = c
+            break
+
+    # fallback automático
+    if idx_col is None:
+        idx_col = df_national.columns[0]
+
+    # establecer índice
+    df_national = df_national.set_index(idx_col)
+
+    # limpiar NaNs
+    df_national = df_national.fillna(0)
 
         sector_names_raw = df_national.index[:num_sectors]
         sector_names     = [str(s)[:30] + ("..." if len(str(s)) > 30 else "") for s in sector_names_raw]
