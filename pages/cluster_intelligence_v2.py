@@ -196,7 +196,7 @@ module = st.radio(
 st.markdown("---")
 
 # ╔═══════════════════════════════════════════════════════╗
-# ║  MÓDULO 1 — NACIONAL LEONTIEF (código original v1)   ║
+# ║  MÓDULO 1 — NACIONAL LEONTIEF                        ║
 # ╚═══════════════════════════════════════════════════════╝
 if module == MODULE_LABELS[0]:
 
@@ -232,16 +232,18 @@ if module == MODULE_LABELS[0]:
 
     labels_path = BASE_DIR.parent / "data" / "sectores.csv"
     if not labels_path.exists():
-        st.error("No se encontró sectores.csv"); st.stop()
+        st.error("No se encontró sectores.csv")
+        st.stop()
     df_lab = pd.read_csv(labels_path)
     if "nombre" not in df_lab.columns or len(df_lab) != n_sectors:
-        st.error("Formato incorrecto en sectores.csv"); st.stop()
+        st.error("Formato incorrecto en sectores.csv")
+        st.stop()
     labels = df_lab["nombre"].astype(str).tolist()
 
     # ── Modelo matemático ─────────────────────────────────
     @st.cache_data
     def build_leontief_model(A_bytes, n, top_k, threshold, resolution):
-        A  = np.frombuffer(A_bytes, dtype=np.float64).reshape(n, n)
+        A      = np.frombuffer(A_bytes, dtype=np.float64).reshape(n, n)
         hs_ok  = bool((A.sum(axis=0) < 1).all())
         I      = np.eye(n)
         M      = I - A
@@ -269,8 +271,8 @@ if module == MODULE_LABELS[0]:
         largest_cc = max(nx.connected_components(G_full), key=len)
         G = G_full.subgraph(largest_cc).copy()
 
-        partition   = community_louvain.best_partition(G, resolution=resolution, random_state=42)
-        modularity  = community_louvain.modularity(partition, G)
+        partition  = community_louvain.best_partition(G, resolution=resolution, random_state=42)
+        modularity = community_louvain.modularity(partition, G)
 
         try:
             centrality = nx.eigenvector_centrality(G, max_iter=1000, tol=1e-6)
@@ -288,11 +290,16 @@ if module == MODULE_LABELS[0]:
     try:
         m = build_leontief_model(A.tobytes(), n_sectors, top_k, threshold, resolution)
     except Exception as e:
-        st.error(f"Error construyendo el modelo: {e}"); st.stop()
+        st.error(f"Error construyendo el modelo: {e}")
+        st.stop()
 
-    G         = m["G"]; L = m["L"]; partition = m["partition"]
-    centrality= m["centrality"]; modularity = m["modularity"]
-    bl        = m["bl"]; fl = m["fl"]
+    G          = m["G"]
+    L          = m["L"]
+    partition  = m["partition"]
+    centrality = m["centrality"]
+    modularity = m["modularity"]
+    bl         = m["bl"]
+    fl         = m["fl"]
 
     nodes = list(G.nodes())
     df = pd.DataFrame({
@@ -306,16 +313,19 @@ if module == MODULE_LABELS[0]:
     })
 
     def classify(row):
-        if row["BL"] >= 1 and row["FL"] >= 1: return "Sector clave"
-        if row["BL"] >= 1 and row["FL"] < 1:  return "Impulsor"
-        if row["BL"] < 1  and row["FL"] >= 1: return "Estratégico"
+        if row["BL"] >= 1 and row["FL"] >= 1:
+            return "Sector clave"
+        if row["BL"] >= 1 and row["FL"] < 1:
+            return "Impulsor"
+        if row["BL"] < 1  and row["FL"] >= 1:
+            return "Estratégico"
         return "Dependiente"
 
     df["tipo"] = df.apply(classify, axis=1)
 
     summary = (df.groupby("cluster")
-               .agg(tamaño=("sector","count"), centralidad_media=("centralidad","mean"),
-                    BL_media=("BL","mean"), FL_media=("FL","mean"))
+               .agg(tamaño=("sector", "count"), centralidad_media=("centralidad", "mean"),
+                    BL_media=("BL", "mean"), FL_media=("FL", "mean"))
                .reset_index())
     summary["score"] = (
         summary["centralidad_media"] / summary["centralidad_media"].max() * 0.5 +
@@ -323,7 +333,7 @@ if module == MODULE_LABELS[0]:
         summary["FL_media"]         / summary["FL_media"].max()          * 0.2
     )
     summary = summary.sort_values("score", ascending=False).reset_index(drop=True)
-    summary.insert(0, "rank", range(1, len(summary)+1))
+    summary.insert(0, "rank", range(1, len(summary) + 1))
 
     n_clusters = df["cluster"].nunique()
     top_cl     = summary.iloc[0]
@@ -334,7 +344,7 @@ if module == MODULE_LABELS[0]:
     kc1.metric("Sectores activos",   G.number_of_nodes(), delta=f"{n_sectors} en MIP")
     kc2.metric("Clusters (Louvain)", n_clusters)
     kc3.metric("Modularidad Q",      f"{modularity:.4f}")
-    kc4.metric("Sectores clave",     int((df["tipo"]=="Sector clave").sum()))
+    kc4.metric("Sectores clave",     int((df["tipo"] == "Sector clave").sum()))
     kc5.metric("Aristas del grafo",  G.number_of_edges())
 
     # ── Tabs ─────────────────────────────────────────────
@@ -344,27 +354,28 @@ if module == MODULE_LABELS[0]:
     ])
 
     with tab1:
-        col_ctrl, _ = st.columns([1,3])
+        col_ctrl, _ = st.columns([1, 3])
         with col_ctrl:
             max_nodes = st.slider("Nodos a mostrar", 10, G.number_of_nodes(), 45, key="m1_net")
         top_n = sorted(centrality, key=centrality.get, reverse=True)[:max_nodes]
         sub   = G.subgraph(top_n)
         pos   = nx.spring_layout(sub, seed=42, k=2.0)
         edge_traces = []
-        weights = [sub[u][v].get("weight",1) for u,v in sub.edges()]
+        weights = [sub[u][v].get("weight", 1) for u, v in sub.edges()]
         w_max   = max(weights) if weights else 1
-        for (u,v),w in zip(sub.edges(), weights):
-            x0,y0=pos[u]; x1,y1=pos[v]
-            alpha = 0.15 + 0.55*(w/w_max)
+        for (u, v), w in zip(sub.edges(), weights):
+            x0, y0 = pos[u]
+            x1, y1 = pos[v]
+            alpha = 0.15 + 0.55 * (w / w_max)
             edge_traces.append(go.Scatter(
-                x=[x0,x1,None], y=[y0,y1,None], mode="lines",
+                x=[x0, x1, None], y=[y0, y1, None], mode="lines",
                 line=dict(width=0.8, color=f"rgba(100,116,139,{alpha:.2f})"),
                 hoverinfo="none", showlegend=False))
         node_trace = go.Scatter(
             x=[pos[nd][0] for nd in sub.nodes()],
             y=[pos[nd][1] for nd in sub.nodes()],
             mode="markers",
-            marker=dict(size=[14+centrality[nd]*120 for nd in sub.nodes()],
+            marker=dict(size=[14 + centrality[nd] * 120 for nd in sub.nodes()],
                         color=[int(partition[nd]) for nd in sub.nodes()],
                         colorscale="Turbo", showscale=True,
                         line=dict(width=1.5, color="#0d0f14"), opacity=0.92),
@@ -372,20 +383,21 @@ if module == MODULE_LABELS[0]:
             hovertext=[f"<b>{labels[nd]}</b><br>Cluster: {partition[nd]}<br>"
                        f"Centralidad: {centrality[nd]:.5f}" for nd in sub.nodes()],
             hoverinfo="text")
-        fig_net = go.Figure(data=edge_traces+[node_trace])
+        fig_net = go.Figure(data=edge_traces + [node_trace])
         fig_net.update_layout(
             title=dict(text=f"Red productiva — top {max_nodes} sectores",
-                       font=dict(family="Space Mono",size=13,color="#94a3b8")),
+                       font=dict(family="Space Mono", size=13, color="#94a3b8")),
             showlegend=False, hovermode="closest",
-            xaxis=dict(showgrid=False,zeroline=False,showticklabels=False),
-            yaxis=dict(showgrid=False,zeroline=False,showticklabels=False),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             height=620, **PLOTLY_THEME)
         st.plotly_chart(fig_net, use_container_width=True)
 
     with tab2:
-        c_left, c_right = st.columns([1,2])
+        c_left, c_right = st.columns([1, 2])
         with c_left:
-            st.dataframe(summary.head(15)[["rank","cluster","tamaño","score"]], use_container_width=True)
+            st.dataframe(summary.head(15)[["rank", "cluster", "tamaño", "score"]],
+                         use_container_width=True)
         with c_right:
             fig_bubble = px.scatter(summary, x="BL_media", y="FL_media", size="tamaño",
                 color="score", hover_name="cluster", size_max=55,
@@ -397,9 +409,10 @@ if module == MODULE_LABELS[0]:
             st.plotly_chart(fig_bubble, use_container_width=True)
             sel_cl = st.selectbox("Explorar cluster", sorted(df["cluster"].unique()),
                                   format_func=lambda x: f"C{x}", key="m1_cl")
-            st.dataframe(df[df["cluster"]==sel_cl].sort_values("centralidad",ascending=False)
-                         [["sector","centralidad","grado","BL","FL","tipo"]].reset_index(drop=True),
-                         use_container_width=True, height=220)
+            st.dataframe(
+                df[df["cluster"] == sel_cl].sort_values("centralidad", ascending=False)
+                [["sector", "centralidad", "grado", "BL", "FL", "tipo"]].reset_index(drop=True),
+                use_container_width=True, height=220)
 
     with tab3:
         fig_quad = px.scatter(df, x="BL", y="FL", color="tipo",
@@ -410,29 +423,33 @@ if module == MODULE_LABELS[0]:
         fig_quad.update_layout(height=520, **PLOTLY_THEME)
         st.plotly_chart(fig_quad, use_container_width=True)
 
-        cl1,cl2,cl3,cl4 = st.columns(4)
-        for col,tipo,cls in zip([cl1,cl2,cl3,cl4],
-            ["Sector clave","Impulsor","Estratégico","Dependiente"],
-            ["ok","","gold","warn"]):
-            cnt = int((df["tipo"]==tipo).sum())
-            col.markdown(f'<div class="kpi-card {cls}"><div class="kpi-label">{tipo}</div>'
-                         f'<div class="kpi-value">{cnt}</div>'
-                         f'<div class="kpi-sub">{cnt/len(df)*100:.1f}% del total</div></div>',
-                         unsafe_allow_html=True)
+        cl1, cl2, cl3, cl4 = st.columns(4)
+        for col, tipo, cls in zip([cl1, cl2, cl3, cl4],
+                ["Sector clave", "Impulsor", "Estratégico", "Dependiente"],
+                ["ok", "", "gold", "warn"]):
+            cnt = int((df["tipo"] == tipo).sum())
+            col.markdown(
+                f'<div class="kpi-card {cls}"><div class="kpi-label">{tipo}</div>'
+                f'<div class="kpi-value">{cnt}</div>'
+                f'<div class="kpi-sub">{cnt/len(df)*100:.1f}% del total</div></div>',
+                unsafe_allow_html=True)
 
     with tab4:
-        cs1, cs2 = st.columns([1,2])
+        cs1, cs2 = st.columns([1, 2])
         with cs1:
             shock_sector = st.selectbox("Sector con shock", labels, key="m1_shock_sec")
             shock_size   = st.number_input("Magnitud del shock", value=1000.0, step=100.0)
             run_btn      = st.button("▶ Ejecutar simulación", type="primary")
         if run_btn:
             idx_s   = labels.index(shock_sector)
-            delta_d = np.zeros(n_sectors); delta_d[idx_s] = shock_size
+            delta_d = np.zeros(n_sectors)
+            delta_d[idx_s] = shock_size
             delta_x = L @ delta_d
-            df_imp  = pd.DataFrame({"sector": labels, "Δx": delta_x,
-                                    "cluster": [partition.get(i,-1) for i in range(n_sectors)]
-                                    }).sort_values("Δx", ascending=False)
+            df_imp  = pd.DataFrame({
+                "sector":  labels,
+                "Δx":      delta_x,
+                "cluster": [partition.get(i, -1) for i in range(n_sectors)],
+            }).sort_values("Δx", ascending=False)
             with cs2:
                 fig_imp = px.bar(df_imp.head(15), x="Δx", y="sector", orientation="h",
                     color="Δx", color_continuous_scale="Turbo",
@@ -440,21 +457,24 @@ if module == MODULE_LABELS[0]:
                 fig_imp.update_layout(yaxis=dict(autorange="reversed"), height=420, **PLOTLY_THEME)
                 st.plotly_chart(fig_imp, use_container_width=True)
             mult = delta_x.sum() / shock_size
-            st.markdown(f'<div class="kpi-card gold"><div class="kpi-label">Multiplicador de producción</div>'
-                        f'<div class="kpi-value">{mult:.4f}</div>'
-                        f'<div class="kpi-sub">Por cada 1 unidad de shock → {mult:.2f} unidades totales</div></div>',
-                        unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="kpi-card gold"><div class="kpi-label">Multiplicador de producción</div>'
+                f'<div class="kpi-value">{mult:.4f}</div>'
+                f'<div class="kpi-sub">Por cada 1 unidad de shock → {mult:.2f} unidades totales</div></div>',
+                unsafe_allow_html=True)
 
     with tab5:
-        c_f1,c_f2,c_f3 = st.columns(3)
+        c_f1, c_f2, c_f3 = st.columns(3)
         f_cl   = c_f1.multiselect("Cluster", sorted(df["cluster"].unique()), key="m1_fcl")
         f_tipo = c_f2.multiselect("Tipo", df["tipo"].unique().tolist(), key="m1_ftp")
-        f_sort = c_f3.selectbox("Ordenar por", ["centralidad","BL","FL","grado"], key="m1_fs")
+        f_sort = c_f3.selectbox("Ordenar por", ["centralidad", "BL", "FL", "grado"], key="m1_fs")
         df_view = df.copy()
-        if f_cl:   df_view = df_view[df_view["cluster"].isin(f_cl)]
-        if f_tipo: df_view = df_view[df_view["tipo"].isin(f_tipo)]
+        if f_cl:
+            df_view = df_view[df_view["cluster"].isin(f_cl)]
+        if f_tipo:
+            df_view = df_view[df_view["tipo"].isin(f_tipo)]
         df_view = df_view.sort_values(f_sort, ascending=False).reset_index(drop=True)
-        st.dataframe(df_view[["sector","cluster","centralidad","grado","BL","FL","tipo"]],
+        st.dataframe(df_view[["sector", "cluster", "centralidad", "grado", "BL", "FL", "tipo"]],
                      use_container_width=True, height=500)
         st.download_button("⬇ Descargar CSV", df_view.to_csv(index=False).encode(),
                            "sectores_clusters.csv", "text/csv")
@@ -469,10 +489,10 @@ elif module == MODULE_LABELS[1]:
         st.markdown('<div class="section-title">📂 Datos — MIP Nacional</div>', unsafe_allow_html=True)
         uploaded_mip = st.file_uploader("MIP Nacional (.csv / .xlsm)", type=["csv", "xlsm", "xlsx"], key="m2_mip")
         st.markdown('<div class="section-title">⚙️ Parámetros</div>', unsafe_allow_html=True)
-        num_sectors_m2  = st.number_input("Número de sectores", 5, 200, 20, key="m2_ns")
+        num_sectors_m2   = st.number_input("Número de sectores", 5, 200, 20, key="m2_ns")
         threshold_pct_m2 = st.slider("Percentil de umbral (%)", 50, 95, 75, key="m2_thresh",
                                      help="Se retienen únicamente las correlaciones por encima de este percentil.")
-        resolution_m2   = st.slider("Resolución Louvain (γ)", 0.5, 2.0, 1.0, 0.1, key="m2_res")
+        resolution_m2    = st.slider("Resolución Louvain (γ)", 0.5, 2.0, 1.0, 0.1, key="m2_res")
 
     st.markdown("""
     <div class="alert-box">
@@ -495,201 +515,201 @@ elif module == MODULE_LABELS[1]:
 
     @st.cache_data
     def build_wiod_model(
-    file_bytes: bytes,
-    filename: str,
-    num_sectors: int,
-    threshold_pct: float,
-    resolution: float):
-      
-    import io
+        file_bytes: bytes,
+        filename: str,
+        num_sectors: int,
+        threshold_pct: float,
+        resolution: float,
+    ):
+        import io
 
-    # ─────────────────────────────────────────────
-    # CARGA FLEXIBLE CSV / XLSX / XLSM
-    # ─────────────────────────────────────────────
-    if filename.endswith((".xlsm", ".xlsx")):
-        df_national = pd.read_excel(io.BytesIO(file_bytes))
-    else:
-        df_national = pd.read_csv(io.BytesIO(file_bytes), sep=',')
+        # ── Carga flexible CSV / XLSX / XLSM ──────────────────────────
+        if filename.endswith((".xlsm", ".xlsx")):
+            df_national = pd.read_excel(io.BytesIO(file_bytes))
+        else:
+            df_national = pd.read_csv(io.BytesIO(file_bytes), sep=",")
 
-    # limpiar nombres de columnas
-    df_national.columns = [str(c).strip() for c in df_national.columns]
+        # Limpiar nombres de columnas
+        df_national.columns = [str(c).strip() for c in df_national.columns]
 
-    # detectar columna índice automáticamente
-    possible_cols = ["Concepto", "concepto", "Sector", "sector"]
+        # Detectar columna índice automáticamente
+        possible_cols = ["Concepto", "concepto", "Sector", "sector"]
+        idx_col = None
+        for c in possible_cols:
+            if c in df_national.columns:
+                idx_col = c
+                break
+        if idx_col is None:
+            idx_col = df_national.columns[0]
 
-    idx_col = None
-    for c in possible_cols:
-        if c in df_national.columns:
-            idx_col = c
-            break
+        df_national = df_national.set_index(idx_col).fillna(0)
 
-    # fallback automático
-    if idx_col is None:
-        idx_col = df_national.columns[0]
+        sector_names_raw = df_national.index[:num_sectors]
+        sector_names = [
+            str(s)[:30] + ("..." if len(str(s)) > 30 else "")
+            for s in sector_names_raw
+        ]
 
-    # establecer índice
-    df_national = df_national.set_index(idx_col)
+        Z_raw = df_national.iloc[:num_sectors, 2: 2 + num_sectors]
+        Z     = Z_raw.apply(pd.to_numeric, errors="coerce").fillna(0).values
 
-    # limpiar NaNs
-    df_national = df_national.fillna(0)
+        imports_row = df_national.loc["IET - Importaciones de la economía total"].iloc[2: 2 + num_sectors]
+        vab_row     = df_national.loc["B.1bV - Valor agregado bruto"].iloc[2: 2 + num_sectors]
+        imports_vec = pd.to_numeric(imports_row, errors="coerce").fillna(0).values
+        vab_vec     = pd.to_numeric(vab_row, errors="coerce").fillna(0).values
+        X_values    = Z.sum(axis=0) + imports_vec + vab_vec
+        X_dict      = dict(zip(sector_names, X_values))
 
-      sector_names_raw = df_national.index[:num_sectors]
-      sector_names     = [str(s)[:30] + ("..." if len(str(s)) > 30 else "") for s in sector_names_raw]
+        epsilon = 1e-9
+        p = Z.sum(axis=0)
+        s = Z.sum(axis=1)
+        X_mat     = Z / (p + epsilon)
+        Y_mat_col = (Z.T / (s + epsilon)).T
 
-      Z_raw = df_national.iloc[:num_sectors, 2: 2 + num_sectors]
-      Z     = Z_raw.apply(pd.to_numeric, errors='coerce').fillna(0).values
+        n = num_sectors
+        R = np.zeros((n, n))
+        np.seterr(invalid="ignore")
 
-      imports_row = df_national.loc['IET - Importaciones de la economía total'].iloc[2: 2 + num_sectors]
-      vab_row     = df_national.loc['B.1bV - Valor agregado bruto'].iloc[2: 2 + num_sectors]
-      imports_vec = pd.to_numeric(imports_row, errors='coerce').fillna(0).values
-      vab_vec     = pd.to_numeric(vab_row,     errors='coerce').fillna(0).values
-      X_values    = Z.sum(axis=0) + imports_vec + vab_vec
-      X_dict      = dict(zip(sector_names, X_values))
+        def safe_corr(v1, v2):
+            if np.std(v1) == 0 or np.std(v2) == 0:
+                return 0.0
+            return float(np.corrcoef(v1, v2)[0, 1])
 
-      epsilon = 1e-9
-      p = Z.sum(axis=0)
-      s = Z.sum(axis=1)
-      X_mat     = Z / (p + epsilon)
-      Y_mat_col = (Z.T / (s + epsilon)).T
+        for k in range(n):
+            for l in range(n):
+                if k == l:
+                    continue
+                R[k, l] = max(
+                    safe_corr(X_mat[:, k], X_mat[:, l]),
+                    safe_corr(Y_mat_col[:, k], Y_mat_col[:, l]),
+                    safe_corr(X_mat[:, k], Y_mat_col[:, l]),
+                    safe_corr(Y_mat_col[:, k], X_mat[:, l]),
+                )
+        R = np.nan_to_num(R)
 
-      n = num_sectors
-      R = np.zeros((n, n))
-      np.seterr(invalid='ignore')
+        pos_corrs = R[R > 0]
+        thresh    = np.percentile(pos_corrs, threshold_pct) if len(pos_corrs) > 0 else 0
 
-      def safe_corr(v1, v2):
-          if np.std(v1) == 0 or np.std(v2) == 0:
-              return 0.0
-          return float(np.corrcoef(v1, v2)[0, 1])
+        G = nx.Graph()
+        for i, u in enumerate(sector_names):
+            G.add_node(u)
+            for j, v in enumerate(sector_names):
+                if i < j and R[i, j] >= thresh:
+                    G.add_edge(u, v, weight=R[i, j])
+        G.remove_nodes_from(list(nx.isolates(G)))
 
-      for k in range(n):
-          for l in range(n):
-              if k == l:
-                  continue
-              R[k, l] = max(
-                  safe_corr(X_mat[:, k], X_mat[:, l]),
-                  safe_corr(Y_mat_col[:, k], Y_mat_col[:, l]),
-                  safe_corr(X_mat[:, k], Y_mat_col[:, l]),
-                  safe_corr(Y_mat_col[:, k], X_mat[:, l]),
-              )
-      R = np.nan_to_num(R)
+        partition  = community_louvain.best_partition(G, weight="weight",
+                                                      resolution=resolution, random_state=42)
+        modularity = community_louvain.modularity(partition, G)
+        num_cl     = len(set(partition.values()))
 
-      pos_corrs = R[R > 0]
-      thresh    = np.percentile(pos_corrs, threshold_pct) if len(pos_corrs) > 0 else 0
+        return {
+            "G": G, "R": R, "partition": partition, "modularity": modularity,
+            "num_clusters": num_cl, "sector_names": sector_names,
+            "X_dict": X_dict, "thresh": thresh,
+        }
 
-      G = nx.Graph()
-      for i, u in enumerate(sector_names):
-          G.add_node(u)
-          for j, v in enumerate(sector_names):
-              if i < j and R[i, j] >= thresh:
-                  G.add_edge(u, v, weight=R[i, j])
-      G.remove_nodes_from(list(nx.isolates(G)))
+    file_bytes = uploaded_mip.read()
+    try:
+        m2 = build_wiod_model(file_bytes, uploaded_mip.name, num_sectors_m2, threshold_pct_m2, resolution_m2)
+    except KeyError as ke:
+        st.error(f"No se encontró la fila esperada en el CSV: {ke}")
+        st.stop()
+    except Exception as e:
+        st.error(f"Error procesando MIP: {e}")
+        st.stop()
 
-      partition  = community_louvain.best_partition(G, weight='weight',
-                                                    resolution=resolution, random_state=42)
-      modularity = community_louvain.modularity(partition, G)
-      num_cl     = len(set(partition.values()))
+    G2         = m2["G"]
+    partition2 = m2["partition"]
+    X_dict2    = m2["X_dict"]
+    snames     = m2["sector_names"]
 
-      return {
-          "G": G, "R": R, "partition": partition, "modularity": modularity,
-          "num_clusters": num_cl, "sector_names": sector_names,
-          "X_dict": X_dict, "thresh": thresh,
-      }
+    # KPIs
+    st.markdown('<div class="section-title">INDICADORES — CORRELACIONES WIOD</div>', unsafe_allow_html=True)
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Sectores en red",     G2.number_of_nodes())
+    k2.metric("Clusters (Louvain)", m2["num_clusters"])
+    k3.metric("Modularidad Q",       f"{m2['modularity']:.4f}")
+    k4.metric("Umbral de correlación", f"{m2['thresh']:.3f}")
 
-  file_bytes = uploaded_mip.read()
-  try:
-      m2 = build_wiod_model(file_bytes, uploaded_mip.name, num_sectors_m2, threshold_pct_m2, resolution_m2)
-  except KeyError as ke:
-      st.error(f"No se encontró la fila esperada en el CSV: {ke}")
-      st.stop()
-  except Exception as e:
-      st.error(f"Error procesando MIP: {e}")
-      st.stop()
+    wtab1, wtab2 = st.tabs(["⬡  Red de correlaciones", "📊  Tabla de comunidades"])
 
-  G2        = m2["G"]
-  partition2= m2["partition"]
-  X_dict2   = m2["X_dict"]
-  snames    = m2["sector_names"]
+    with wtab1:
+        col_ctrl2, _ = st.columns([1, 3])
+        with col_ctrl2:
+            max_n2 = st.slider("Nodos a mostrar", 5, G2.number_of_nodes(),
+                               min(35, G2.number_of_nodes()), key="m2_net")
 
-  # KPIs
-  st.markdown('<div class="section-title">INDICADORES — CORRELACIONES WIOD</div>', unsafe_allow_html=True)
-  k1,k2,k3,k4 = st.columns(4)
-  k1.metric("Sectores en red", G2.number_of_nodes())
-  k2.metric("Clusters (Louvain)", m2["num_clusters"])
-  k3.metric("Modularidad Q", f"{m2['modularity']:.4f}")
-  k4.metric("Umbral de correlación", f"{m2['thresh']:.3f}")
+        deg_cent2 = nx.degree_centrality(G2)
+        top_n2    = sorted(deg_cent2, key=deg_cent2.get, reverse=True)[:max_n2]
+        sub2      = G2.subgraph(top_n2)
+        pos2      = nx.spring_layout(sub2, k=0.45, seed=42)
 
-  wtab1, wtab2 = st.tabs(["⬡  Red de correlaciones", "📊  Tabla de comunidades"])
+        edge_traces2 = []
+        ew2   = [sub2[u][v]["weight"] for u, v in sub2.edges()]
+        thresh2 = m2["thresh"]
+        for (u, v), w in zip(sub2.edges(), ew2):
+            x0, y0 = pos2[u]
+            x1, y1 = pos2[v]
+            norm_w = (w - thresh2) / (1 - thresh2 + 1e-9) * 3 + 0.5
+            edge_traces2.append(go.Scatter(
+                x=[x0, x1, None], y=[y0, y1, None], mode="lines",
+                line=dict(width=float(norm_w), color="rgba(100,116,139,0.4)"),
+                hoverinfo="none", showlegend=False))
 
-  with wtab1:
-      col_ctrl2, _ = st.columns([1,3])
-      with col_ctrl2:
-          max_n2 = st.slider("Nodos a mostrar", 5, G2.number_of_nodes(), min(35, G2.number_of_nodes()), key="m2_net")
+        active_X = [X_dict2.get(nd, 1) for nd in sub2.nodes()]
+        min_X2, max_X2 = min(active_X), max(active_X)
+        if max_X2 > min_X2:
+            node_sizes2 = [300 + 3000 * (x - min_X2) / (max_X2 - min_X2) for x in active_X]
+        else:
+            node_sizes2 = [800 for _ in active_X]
 
-      deg_cent2 = nx.degree_centrality(G2)
-      top_n2    = sorted(deg_cent2, key=deg_cent2.get, reverse=True)[:max_n2]
-      sub2      = G2.subgraph(top_n2)
-      pos2      = nx.spring_layout(sub2, k=0.45, seed=42)
+        node_trace2 = go.Scatter(
+            x=[pos2[nd][0] for nd in sub2.nodes()],
+            y=[pos2[nd][1] for nd in sub2.nodes()],
+            mode="markers+text",
+            marker=dict(size=[s ** 0.5 * 2.5 for s in node_sizes2],
+                        color=[int(partition2[nd]) for nd in sub2.nodes()],
+                        colorscale="Set2_r", showscale=False,
+                        line=dict(width=2, color="white"), opacity=0.9),
+            text=[nd[:18] for nd in sub2.nodes()],
+            textfont=dict(size=7, family="Space Mono", color="#2c3e50"),
+            textposition="top center",
+            hovertext=[f"<b>{nd}</b><br>Cluster: {partition2[nd]}<br>"
+                       f"X: {X_dict2.get(nd, 0):,.0f}" for nd in sub2.nodes()],
+            hoverinfo="text")
 
-      edge_traces2 = []
-      ew2 = [sub2[u][v]['weight'] for u,v in sub2.edges()]
-      wmax2 = max(ew2) if ew2 else 1
-      thresh2 = m2["thresh"]
-      for (u,v),w in zip(sub2.edges(), ew2):
-          x0,y0=pos2[u]; x1,y1=pos2[v]
-          norm_w = (w - thresh2) / (1 - thresh2 + 1e-9) * 3 + 0.5
-          edge_traces2.append(go.Scatter(
-              x=[x0,x1,None], y=[y0,y1,None], mode="lines",
-              line=dict(width=float(norm_w), color="rgba(100,116,139,0.4)"),
-              hoverinfo="none", showlegend=False))
+        fig_net2 = go.Figure(data=edge_traces2 + [node_trace2])
+        fig_net2.update_layout(
+            title=dict(
+                text="Red de correlaciones WIOD — tamaño de nodo proporcional a Producción Bruta X",
+                font=dict(family="Space Mono", size=12, color="#94a3b8")),
+            showlegend=False, hovermode="closest",
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            height=640, **PLOTLY_THEME)
+        st.plotly_chart(fig_net2, use_container_width=True)
 
-      active_X = [X_dict2.get(nd, 1) for nd in sub2.nodes()]
-      min_X2, max_X2 = min(active_X), max(active_X)
-      if max_X2 > min_X2:
-          node_sizes2 = [300 + 3000*(x - min_X2)/(max_X2 - min_X2) for x in active_X]
-      else:
-          node_sizes2 = [800 for _ in active_X]
-
-      node_trace2 = go.Scatter(
-          x=[pos2[nd][0] for nd in sub2.nodes()],
-          y=[pos2[nd][1] for nd in sub2.nodes()],
-          mode="markers+text",
-          marker=dict(size=[s**0.5 * 2.5 for s in node_sizes2],
-                      color=[int(partition2[nd]) for nd in sub2.nodes()],
-                      colorscale="Set2_r", showscale=False,
-                      line=dict(width=2, color="white"), opacity=0.9),
-          text=[nd[:18] for nd in sub2.nodes()],
-          textfont=dict(size=7, family="Space Mono", color="#2c3e50"),
-          textposition="top center",
-          hovertext=[f"<b>{nd}</b><br>Cluster: {partition2[nd]}<br>"
-                     f"X: {X_dict2.get(nd,0):,.0f}" for nd in sub2.nodes()],
-          hoverinfo="text")
-
-      fig_net2 = go.Figure(data=edge_traces2 + [node_trace2])
-      fig_net2.update_layout(
-          title=dict(text="Red de correlaciones WIOD — tamaño de nodo proporcional a Producción Bruta X",
-                     font=dict(family="Space Mono", size=12, color="#94a3b8")),
-          showlegend=False, hovermode="closest",
-          xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-          yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-          height=640, **PLOTLY_THEME)
-      st.plotly_chart(fig_net2, use_container_width=True)
-
-  with wtab2:
-      df_wiod = pd.DataFrame({
-          "sector":   list(partition2.keys()),
-          "cluster":  list(partition2.values()),
-          "X":        [X_dict2.get(s, 0) for s in partition2.keys()],
-      })
-      summary_wiod = (df_wiod.groupby("cluster")
-                      .agg(tamaño=("sector","count"), X_total=("X","sum"))
-                      .reset_index().sort_values("X_total", ascending=False)
-                      .reset_index(drop=True))
-      st.dataframe(summary_wiod, use_container_width=True)
-      st.markdown("**Sectores por cluster**")
-      sel_cl2 = st.selectbox("Cluster", sorted(df_wiod["cluster"].unique()),
-                              format_func=lambda x: f"C{x}", key="m2_cl")
-      st.dataframe(df_wiod[df_wiod["cluster"]==sel_cl2].sort_values("X", ascending=False)
-                   .reset_index(drop=True), use_container_width=True)
+    with wtab2:
+        df_wiod = pd.DataFrame({
+            "sector":  list(partition2.keys()),
+            "cluster": list(partition2.values()),
+            "X":       [X_dict2.get(s, 0) for s in partition2.keys()],
+        })
+        summary_wiod = (df_wiod.groupby("cluster")
+                        .agg(tamaño=("sector", "count"), X_total=("X", "sum"))
+                        .reset_index()
+                        .sort_values("X_total", ascending=False)
+                        .reset_index(drop=True))
+        st.dataframe(summary_wiod, use_container_width=True)
+        st.markdown("**Sectores por cluster**")
+        sel_cl2 = st.selectbox("Cluster", sorted(df_wiod["cluster"].unique()),
+                               format_func=lambda x: f"C{x}", key="m2_cl")
+        st.dataframe(
+            df_wiod[df_wiod["cluster"] == sel_cl2]
+            .sort_values("X", ascending=False)
+            .reset_index(drop=True),
+            use_container_width=True)
 
 
 # ╔═══════════════════════════════════════════════════════════════════╗
@@ -698,526 +718,497 @@ elif module == MODULE_LABELS[1]:
 # ╚═══════════════════════════════════════════════════════════════════╝
 elif module == MODULE_LABELS[2]:
 
-  # ──────────────────────────────────────────────────────────────────
-  # NUEVO ▶ Helper: detección y carga de estados desde disco
-  # ──────────────────────────────────────────────────────────────────
-  # Archivos mínimos requeridos por carpeta de estado
-  _REQUIRED_NPY = {"Z.npy", "L.npy"}
-  # Archivos opcionales enriquecen la visualización pero no son
-  # indispensables para el análisis de clusters y contagio
-  _OPTIONAL_NPY = {"A.npy", "X.npy", "Y.npy", "v.npy", "e.npy",
-                   "VA_r.npy", "PO_r.npy", "FLQ.npy"}
+    # ── Archivos mínimos / opcionales ────────────────────
+    _REQUIRED_NPY = {"Z.npy", "L.npy"}
+    _OPTIONAL_NPY = {"A.npy", "X.npy", "Y.npy", "v.npy", "e.npy",
+                     "VA_r.npy", "PO_r.npy", "FLQ.npy"}
 
-  def _discover_states(base: Path) -> dict[str, Path]:
-      """
-      Recorre subdirectorios de `base` y devuelve un mapa
-      {nombre_legible: Path} de todos los estados que contienen
-      al menos los archivos .npy mínimos requeridos.
-      """
-      states: dict[str, Path] = {}
-      for folder in sorted(base.iterdir()):
-          if not folder.is_dir():
-              continue
-          files = {f.name for f in folder.iterdir() if f.suffix == ".npy"}
-          if _REQUIRED_NPY.issubset(files):
-              # Convierte el nombre de carpeta a título legible
-              readable = folder.name.replace("_", " ").title()
-              states[readable] = folder
-      return states
+    def _discover_states(base: Path) -> dict:
+        states = {}
+        if not base.exists():
+            return states
+        for folder in sorted(base.iterdir()):
+            if not folder.is_dir():
+                continue
+            files = {f.name for f in folder.iterdir() if f.suffix == ".npy"}
+            if _REQUIRED_NPY.issubset(files):
+                readable = folder.name.replace("_", " ").title()
+                states[readable] = folder
+        return states
 
-  def _load_regional_npy(state_path: Path) -> dict:
-      """
-      Carga todas las matrices .npy disponibles en `state_path`.
-      Devuelve un dict con las matrices y los nombres de sector
-      (leídos de sectores.csv si existe en la carpeta o en el padre).
-      """
-      Z_r = np.load(state_path / "Z.npy")
-      L_r = np.load(state_path / "L.npy")
-      n   = Z_r.shape[0]
+    def _load_regional_npy(state_path: Path) -> dict:
+        Z_r = np.load(state_path / "Z.npy")
+        L_r = np.load(state_path / "L.npy")
+        n   = Z_r.shape[0]
 
-      # ── Nombres de sector ──────────────────────────────────────
-      # Prioridad: sectores.csv en la carpeta del estado →
-      #            sectores.csv en el directorio padre →
-      #            etiquetas genéricas "Sector 001 … N"
-      label_candidates = [
-          state_path / "sectores.csv",
-          state_path.parent / "sectores.csv",
-      ]
-      sector_names: list[str] = []
-      for cand in label_candidates:
-          if cand.exists():
-              df_s = pd.read_csv(cand)
-              col  = next((c for c in ["nombre", "name", "sector"] if c in df_s.columns), None)
-              if col and len(df_s) >= n:
-                  sector_names = df_s[col].astype(str).tolist()[:n]
-                  break
-      if not sector_names:
-          sector_names = [f"Sector {i+1:03d}" for i in range(n)]
+        label_candidates = [
+            state_path / "sectores.csv",
+            state_path.parent / "sectores.csv",
+        ]
+        sector_names = []
+        for cand in label_candidates:
+            if cand.exists():
+                df_s = pd.read_csv(cand)
+                col  = next((c for c in ["nombre", "name", "sector"] if c in df_s.columns), None)
+                if col and len(df_s) >= n:
+                    sector_names = df_s[col].astype(str).tolist()[:n]
+                    break
+        if not sector_names:
+            sector_names = [f"Sector {i+1:03d}" for i in range(n)]
 
-      # ── Matrices opcionales ────────────────────────────────────
-      def _try_load(fname: str) -> np.ndarray | None:
-          p = state_path / fname
-          return np.load(p) if p.exists() else None
+        def _try_load(fname):
+            p = state_path / fname
+            return np.load(p) if p.exists() else None
 
-      return {
-          "Z_r":   Z_r,
-          "L_r":   L_r,
-          "A":     _try_load("A.npy"),
-          "X":     _try_load("X.npy"),
-          "Y":     _try_load("Y.npy"),
-          "v":     _try_load("v.npy"),
-          "e":     _try_load("e.npy"),
-          "VA_r":  _try_load("VA_r.npy"),
-          "PO_r":  _try_load("PO_r.npy"),
-          "FLQ":   _try_load("FLQ.npy"),
-          "sector_names": sector_names,
-          "n": n,
-      }
+        return {
+            "Z_r":   Z_r,
+            "L_r":   L_r,
+            "A":     _try_load("A.npy"),
+            "X":     _try_load("X.npy"),
+            "Y":     _try_load("Y.npy"),
+            "v":     _try_load("v.npy"),
+            "e":     _try_load("e.npy"),
+            "VA_r":  _try_load("VA_r.npy"),
+            "PO_r":  _try_load("PO_r.npy"),
+            "FLQ":   _try_load("FLQ.npy"),
+            "sector_names": sector_names,
+            "n": n,
+        }
 
-  # ── Sidebar Regional ─────────────────────────────────
-  with st.sidebar:
-      st.markdown('<div class="section-title">📂 Datos Regionales</div>', unsafe_allow_html=True)
+    # ── Sidebar Regional ─────────────────────────────────
+    with st.sidebar:
+        st.markdown('<div class="section-title">📂 Datos Regionales</div>', unsafe_allow_html=True)
 
-      # ── NUEVO: selector automático de estado ──────────────────
-      discovered = _discover_states(BASE_DIR.parent / "data2")
+        discovered = _discover_states(BASE_DIR.parent / "data2")
 
-      if discovered:
-          state_options = list(discovered.keys())
-          selected_state_name = st.selectbox(
-              "Estado (carga automática)",
-              state_options,
-              key="m3_state_sel",
-              help="Carpetas con Z.npy y L.npy detectadas automáticamente.",
-          )
-          selected_state_path = discovered[selected_state_name]
-          use_manual_upload   = st.checkbox(
-              "Usar carga manual (CSV)", value=False, key="m3_manual",
-              help="Activa esta opción si prefieres subir archivos CSV en vez de usar los .npy del disco.",
-          )
-      else:
-          # Si no hay carpetas con .npy, caemos en modo manual
-          st.info("No se detectaron carpetas con matrices .npy. Usa la carga manual.")
-          use_manual_upload   = True
-          selected_state_name = None
-          selected_state_path = None
+        if discovered:
+            state_options       = list(discovered.keys())
+            selected_state_name = st.selectbox(
+                "Estado (carga automática)", state_options, key="m3_state_sel",
+                help="Carpetas con Z.npy y L.npy detectadas automáticamente.",
+            )
+            selected_state_path = discovered[selected_state_name]
+            use_manual_upload   = st.checkbox(
+                "Usar carga manual (CSV)", value=False, key="m3_manual",
+                help="Activa esta opción si prefieres subir archivos CSV.",
+            )
+        else:
+            st.info("No se detectaron carpetas con matrices .npy. Usa la carga manual.")
+            use_manual_upload   = True
+            selected_state_name = None
+            selected_state_path = None
 
-      # ── Carga manual (fallback) ───────────────────────────────
-      if use_manual_upload or not discovered:
-          uploaded_Zr = st.file_uploader("Matriz Zr (.csv)", type=["csv"], key="m3_Zr")
-          uploaded_Lr = st.file_uploader("Matriz Lr (.csv)", type=["csv"], key="m3_Lr")
-      else:
-          uploaded_Zr = None
-          uploaded_Lr = None
+        if use_manual_upload or not discovered:
+            uploaded_Zr = st.file_uploader("Matriz Zr (.csv)", type=["csv"], key="m3_Zr")
+            uploaded_Lr = st.file_uploader("Matriz Lr (.csv)", type=["csv"], key="m3_Lr")
+        else:
+            uploaded_Zr = None
+            uploaded_Lr = None
 
-      st.markdown('<div class="section-title">⚙️ Parámetros Regionales</div>', unsafe_allow_html=True)
-      threshold_pct_r = st.slider("Percentil de umbral correlaciones (%)", 50, 95, 75, key="m3_thresh")
-      resolution_r    = st.slider("Resolución Louvain (γ)", 0.5, 2.0, 1.0, 0.1, key="m3_res")
+        st.markdown('<div class="section-title">⚙️ Parámetros Regionales</div>', unsafe_allow_html=True)
+        threshold_pct_r = st.slider("Percentil de umbral correlaciones (%)", 50, 95, 75, key="m3_thresh")
+        resolution_r    = st.slider("Resolución Louvain (γ)", 0.5, 2.0, 1.0, 0.1, key="m3_res")
 
-      st.markdown('<div class="section-title">💥 Parámetros de Shock</div>', unsafe_allow_html=True)
-      shock_value_r = st.number_input(
-          "Magnitud del shock (MXN M)", value=-100.0, step=50.0, key="m3_shock",
-          help="Valor negativo = contracción de demanda; positivo = expansión",
-      )
+        st.markdown('<div class="section-title">💥 Parámetros de Shock</div>', unsafe_allow_html=True)
+        shock_value_r = st.number_input(
+            "Magnitud del shock (MXN M)", value=-100.0, step=50.0, key="m3_shock",
+            help="Valor negativo = contracción de demanda; positivo = expansión",
+        )
 
-  st.markdown("""
-  <div class="alert-box">
-    <strong>Módulo Regional:</strong> Implementa el análisis de vulnerabilidad estructural y
-    mapeo de contagio financiero. Las matrices se cargan automáticamente desde archivos
-    <code>.npy</code> por estado; la carga manual en CSV sigue disponible como alternativa.
-  </div>
-  """, unsafe_allow_html=True)
+    st.markdown("""
+    <div class="alert-box">
+      <strong>Módulo Regional:</strong> Implementa el análisis de vulnerabilidad estructural y
+      mapeo de contagio financiero. Las matrices se cargan automáticamente desde archivos
+      <code>.npy</code> por estado; la carga manual en CSV sigue disponible como alternativa.
+    </div>
+    """, unsafe_allow_html=True)
 
-  # ──────────────────────────────────────────────────────────────────
-  # NUEVO ▶ Backend cacheado unificado: acepta npy (disco) o csv (manual)
-  # ──────────────────────────────────────────────────────────────────
-  @st.cache_data
-  def build_regional_model_npy(
-      Z_bytes: bytes, L_bytes: bytes,
-      sector_names: list[str],
-      threshold_pct: float, resolution: float,
-  ):
-      """
-      Construye el modelo regional a partir de arrays serializados.
-      Acepta los arrays como bytes (Z_bytes, L_bytes) para que
-      @st.cache_data pueda hashearlos correctamente.
-      """
-      Z_r = np.frombuffer(Z_bytes, dtype=np.float64).reshape(len(sector_names), -1)
-      L_r = np.frombuffer(L_bytes, dtype=np.float64).reshape(len(sector_names), -1)
-      n   = len(sector_names)
+    # ── Modelo regional cacheado ──────────────────────────
+    @st.cache_data
+    def build_regional_model_npy(
+        Z_bytes: bytes,
+        L_bytes: bytes,
+        sector_names: list,
+        threshold_pct: float,
+        resolution: float,
+    ):
+        n   = len(sector_names)
+        Z_r = np.frombuffer(Z_bytes, dtype=np.float64).reshape(n, -1)
+        L_r = np.frombuffer(L_bytes, dtype=np.float64).reshape(n, -1)
 
-      epsilon = 1e-9
-      p = Z_r.sum(axis=0)
-      s = Z_r.sum(axis=1)
-      active_mask = (p > epsilon) & (s > epsilon)
+        epsilon = 1e-9
+        p = Z_r.sum(axis=0)
+        s = Z_r.sum(axis=1)
+        active_mask = (p > epsilon) & (s > epsilon)
 
-      X_mat     = np.zeros_like(Z_r)
-      Y_mat_col = np.zeros_like(Z_r)
-      for j in range(n):
-          if active_mask[j]:
-              X_mat[:, j] = Z_r[:, j] / p[j]
-      for i in range(n):
-          if active_mask[i]:
-              Y_mat_col[i, :] = Z_r[i, :] / s[i]
+        X_mat     = np.zeros_like(Z_r)
+        Y_mat_col = np.zeros_like(Z_r)
+        for j in range(n):
+            if active_mask[j]:
+                X_mat[:, j] = Z_r[:, j] / p[j]
+        for i in range(n):
+            if active_mask[i]:
+                Y_mat_col[i, :] = Z_r[i, :] / s[i]
 
-      def safe_corr(v1, v2):
-          if np.std(v1) == 0 or np.std(v2) == 0:
-              return 0.0
-          return float(np.corrcoef(v1, v2)[0, 1])
+        def safe_corr(v1, v2):
+            if np.std(v1) == 0 or np.std(v2) == 0:
+                return 0.0
+            return float(np.corrcoef(v1, v2)[0, 1])
 
-      R_r = np.zeros((n, n))
-      np.seterr(invalid="ignore")
-      for k in range(n):
-          for l in range(n):
-              if k == l or not (active_mask[k] and active_mask[l]):
-                  continue
-              R_r[k, l] = max(
-                  safe_corr(X_mat[:, k], X_mat[:, l]),
-                  safe_corr(Y_mat_col[:, k], Y_mat_col[:, l]),
-                  safe_corr(X_mat[:, k], Y_mat_col[:, l]),
-                  safe_corr(Y_mat_col[:, k], X_mat[:, l]),
-              )
-      R_r = np.nan_to_num(R_r)
+        R_r = np.zeros((n, n))
+        np.seterr(invalid="ignore")
+        for k in range(n):
+            for l in range(n):
+                if k == l or not (active_mask[k] and active_mask[l]):
+                    continue
+                R_r[k, l] = max(
+                    safe_corr(X_mat[:, k], X_mat[:, l]),
+                    safe_corr(Y_mat_col[:, k], Y_mat_col[:, l]),
+                    safe_corr(X_mat[:, k], Y_mat_col[:, l]),
+                    safe_corr(Y_mat_col[:, k], X_mat[:, l]),
+                )
+        R_r = np.nan_to_num(R_r)
 
-      pos_corrs = R_r[R_r > 0]
-      thresh    = np.percentile(pos_corrs, threshold_pct) if len(pos_corrs) > 0 else 0
+        pos_corrs = R_r[R_r > 0]
+        thresh    = np.percentile(pos_corrs, threshold_pct) if len(pos_corrs) > 0 else 0
 
-      G = nx.Graph()
-      for i, u in enumerate(sector_names):
-          if active_mask[i]:
-              G.add_node(u, sector_idx=i)
-              for j, v in enumerate(sector_names):
-                  if i < j and active_mask[j] and R_r[i, j] >= thresh:
-                      G.add_edge(u, v, weight=R_r[i, j])
-      G.remove_nodes_from(list(nx.isolates(G)))
+        G = nx.Graph()
+        for i, u in enumerate(sector_names):
+            if active_mask[i]:
+                G.add_node(u, sector_idx=i)
+                for j, v in enumerate(sector_names):
+                    if i < j and active_mask[j] and R_r[i, j] >= thresh:
+                        G.add_edge(u, v, weight=R_r[i, j])
+        G.remove_nodes_from(list(nx.isolates(G)))
 
-      partition  = community_louvain.best_partition(G, weight="weight",
-                                                    resolution=resolution, random_state=42)
-      modularity = community_louvain.modularity(partition, G)
+        partition  = community_louvain.best_partition(G, weight="weight",
+                                                      resolution=resolution, random_state=42)
+        modularity = community_louvain.modularity(partition, G)
 
-      return {
-          "G": G, "R_r": R_r, "L_r": L_r, "partition": partition,
-          "modularity": modularity, "sector_names": sector_names,
-          "active_mask": active_mask, "thresh": thresh,
-          "n_active": int(active_mask.sum()), "n_total": n,
-      }
+        return {
+            "G": G, "R_r": R_r, "L_r": L_r, "partition": partition,
+            "modularity": modularity, "sector_names": sector_names,
+            "active_mask": active_mask, "thresh": thresh,
+            "n_active": int(active_mask.sum()), "n_total": n,
+        }
 
-  @st.cache_data
-  def build_regional_model_csv(Zr_bytes: bytes, Lr_bytes: bytes,
-                                threshold_pct: float, resolution: float):
-      """Ruta original: carga desde CSV. Mantenida para compatibilidad."""
-      import io
-      Z_r_df = pd.read_csv(io.BytesIO(Zr_bytes), index_col=0)
-      L_r_df = pd.read_csv(io.BytesIO(Lr_bytes), index_col=0)
-      raw_names    = [str(name) for name in Z_r_df.index]
-      sector_names = [s[:28] + ("..." if len(s) > 28 else "") for s in raw_names]
-      Z_r_df.index = sector_names; Z_r_df.columns = sector_names
-      L_r_df.index = sector_names; L_r_df.columns = sector_names
-      Z_r = Z_r_df.values
-      L_r = L_r_df.values
-      n   = len(sector_names)
-      return build_regional_model_npy(
-          Z_r.tobytes(), L_r.tobytes(), sector_names, threshold_pct, resolution
-      )
+    @st.cache_data
+    def build_regional_model_csv(Zr_bytes: bytes, Lr_bytes: bytes,
+                                 threshold_pct: float, resolution: float):
+        import io
+        Z_r_df = pd.read_csv(io.BytesIO(Zr_bytes), index_col=0)
+        L_r_df = pd.read_csv(io.BytesIO(Lr_bytes), index_col=0)
+        raw_names    = [str(name) for name in Z_r_df.index]
+        sector_names = [s[:28] + ("..." if len(s) > 28 else "") for s in raw_names]
+        Z_r_df.index   = sector_names
+        Z_r_df.columns = sector_names
+        L_r_df.index   = sector_names
+        L_r_df.columns = sector_names
+        Z_r = Z_r_df.values
+        L_r = L_r_df.values
+        return build_regional_model_npy(
+            Z_r.tobytes(), L_r.tobytes(), sector_names, threshold_pct, resolution
+        )
 
-  # ── Resolución de fuente de datos ─────────────────────
-  mr = None
-  _extra: dict = {}  # matrices opcionales (v, e, VA_r, etc.)
+    # ── Resolución de fuente de datos ─────────────────────
+    mr     = None
+    _extra = {}
 
-  if not use_manual_upload and selected_state_path is not None:
-      # ── Ruta automática: .npy desde disco ────────────────
-      try:
-          raw = _load_regional_npy(selected_state_path)
-          Z_r, L_r = raw["Z_r"], raw["L_r"]
-          mr = build_regional_model_npy(
-              Z_r.tobytes(), L_r.tobytes(),
-              raw["sector_names"],
-              threshold_pct_r, resolution_r,
-          )
-          _extra = raw  # guarda las matrices opcionales para KPIs adicionales
-      except Exception as e:
-          st.error(f"Error cargando matrices .npy de '{selected_state_name}': {e}")
-          st.stop()
+    if not use_manual_upload and selected_state_path is not None:
+        try:
+            raw = _load_regional_npy(selected_state_path)
+            Z_r, L_r = raw["Z_r"], raw["L_r"]
+            mr = build_regional_model_npy(
+                Z_r.tobytes(), L_r.tobytes(),
+                raw["sector_names"],
+                threshold_pct_r, resolution_r,
+            )
+            _extra = raw
+        except Exception as e:
+            st.error(f"Error cargando matrices .npy de '{selected_state_name}': {e}")
+            st.stop()
 
-  elif use_manual_upload:
-      # ── Ruta manual: CSV subido por el usuario ────────────
-      if uploaded_Zr is None or uploaded_Lr is None:
-          st.info("📂 Carga ambas matrices regionales (Zr y Lr) en el panel lateral.")
-          st.markdown("""
-          **Formato esperado:**
-          - CSV con primera columna como índice (nombres de sectores)
-          - Dimensión: n×n donde n es el número de sectores
-          """)
-          st.stop()
-      try:
-          Zr_bytes = uploaded_Zr.read()
-          Lr_bytes = uploaded_Lr.read()
-          mr = build_regional_model_csv(Zr_bytes, Lr_bytes, threshold_pct_r, resolution_r)
-      except Exception as e:
-          st.error(f"Error procesando matrices regionales CSV: {e}")
-          st.stop()
+    elif use_manual_upload:
+        if uploaded_Zr is None or uploaded_Lr is None:
+            st.info("📂 Carga ambas matrices regionales (Zr y Lr) en el panel lateral.")
+            st.markdown("""
+            **Formato esperado:**
+            - CSV con primera columna como índice (nombres de sectores)
+            - Dimensión: n×n donde n es el número de sectores
+            """)
+            st.stop()
+        try:
+            Zr_bytes = uploaded_Zr.read()
+            Lr_bytes = uploaded_Lr.read()
+            mr = build_regional_model_csv(Zr_bytes, Lr_bytes, threshold_pct_r, resolution_r)
+        except Exception as e:
+            st.error(f"Error procesando matrices regionales CSV: {e}")
+            st.stop()
 
-  else:
-      st.error("No hay fuente de datos configurada. Verifica la carpeta de datos o usa la carga manual.")
-      st.stop()
+    else:
+        st.error("No hay fuente de datos configurada. Verifica la carpeta de datos o usa la carga manual.")
+        st.stop()
 
-  # A partir de aquí el código es idéntico al original, usando `mr`
-  Gr          = mr["G"]
-  L_r         = mr["L_r"]
-  partition_r = mr["partition"]
-  snames_r    = mr["sector_names"]
-  n_r         = mr["n_total"]
-  thresh_r    = mr["thresh"]
+    Gr          = mr["G"]
+    L_r         = mr["L_r"]
+    partition_r = mr["partition"]
+    snames_r    = mr["sector_names"]
+    n_r         = mr["n_total"]
+    thresh_r    = mr["thresh"]
 
-  # ── KPIs Regionales ──────────────────────────────────
-  st.markdown(
-      f'<div class="section-title">ESTRUCTURA REGIONAL — {(selected_state_name or "carga manual").upper()}</div>',
-      unsafe_allow_html=True,
-  )
-  kr1, kr2, kr3, kr4, kr5 = st.columns(5)
-  kr1.metric("Sectores totales",  n_r)
-  kr2.metric("Sectores activos",  mr["n_active"])
-  kr3.metric("Nodos en red",      Gr.number_of_nodes())
-  kr4.metric("Comunidades",       len(set(partition_r.values())))
-  kr5.metric("Modularidad Q",     f"{mr['modularity']:.4f}")
+    # ── KPIs Regionales ──────────────────────────────────
+    st.markdown(
+        f'<div class="section-title">ESTRUCTURA REGIONAL — '
+        f'{(selected_state_name or "carga manual").upper()}</div>',
+        unsafe_allow_html=True,
+    )
+    kr1, kr2, kr3, kr4, kr5 = st.columns(5)
+    kr1.metric("Sectores totales", n_r)
+    kr2.metric("Sectores activos", mr["n_active"])
+    kr3.metric("Nodos en red",     Gr.number_of_nodes())
+    kr4.metric("Comunidades",      len(set(partition_r.values())))
+    kr5.metric("Modularidad Q",    f"{mr['modularity']:.4f}")
 
-  # ── KPIs de matrices opcionales (solo en modo automático) ──
-  if _extra.get("VA_r") is not None and _extra.get("PO_r") is not None:
-      ek1, ek2, ek3 = st.columns(3)
-      ek1.metric("VA total (Mmdp)",  f"{_extra['VA_r'].sum():,.1f}")
-      ek2.metric("Personal ocupado", f"{int(_extra['PO_r'].sum()):,}")
-      if _extra.get("X") is not None:
-          ek3.metric("Producción total (Mmdp)", f"{_extra['X'].sum():,.1f}")
+    if _extra.get("VA_r") is not None and _extra.get("PO_r") is not None:
+        ek1, ek2, ek3 = st.columns(3)
+        ek1.metric("VA total (Mmdp)",   f"{_extra['VA_r'].sum():,.1f}")
+        ek2.metric("Personal ocupado",  f"{int(_extra['PO_r'].sum()):,}")
+        if _extra.get("X") is not None:
+            ek3.metric("Producción total (Mmdp)", f"{_extra['X'].sum():,.1f}")
 
-  # ── Selector de sector para shock ────────────────────
-  active_sectors_r = list(Gr.nodes())
-  shock_sector_r   = st.selectbox(
-      "🎯 Sector de origen del shock financiero",
-      active_sectors_r,
-      help="Selecciona el sector que recibe el shock exógeno de demanda",
-      key="m3_shock_sec",
-  )
+    # ── Selector de sector para shock ────────────────────
+    active_sectors_r = list(Gr.nodes())
+    shock_sector_r   = st.selectbox(
+        "🎯 Sector de origen del shock financiero",
+        active_sectors_r,
+        help="Selecciona el sector que recibe el shock exógeno de demanda",
+        key="m3_shock_sec",
+    )
 
-  # ── CALCULAR SHOCK ────────────────────────────────────
-  @st.cache_data
-  def compute_shock(Lr_bytes: bytes, n: int, snames: list, target_name: str, shock_val: float):
-      L_r        = np.frombuffer(Lr_bytes, dtype=np.float64).reshape(n, n)
-      idx        = snames.index(target_name)
-      Delta_f    = np.zeros(n)
-      Delta_f[idx] = shock_val
-      Delta_x    = np.dot(L_r, Delta_f)
-      Damage     = np.abs(Delta_x)
-      total_loss = Damage.sum()
-      multiplier = Delta_x.sum() / shock_val if shock_val != 0 else 0
-      return (
-          dict(zip(snames, Damage)),
-          dict(zip(snames, Delta_x)),
-          total_loss, multiplier,
-      )
+    # ── Calcular shock ────────────────────────────────────
+    @st.cache_data
+    def compute_shock(Lr_bytes: bytes, n: int, snames: list, target_name: str, shock_val: float):
+        L_r      = np.frombuffer(Lr_bytes, dtype=np.float64).reshape(n, n)
+        idx      = snames.index(target_name)
+        Delta_f  = np.zeros(n)
+        Delta_f[idx] = shock_val
+        Delta_x  = np.dot(L_r, Delta_f)
+        Damage   = np.abs(Delta_x)
+        total_loss  = Damage.sum()
+        multiplier  = Delta_x.sum() / shock_val if shock_val != 0 else 0
+        return (
+            dict(zip(snames, Damage)),
+            dict(zip(snames, Delta_x)),
+            total_loss, multiplier,
+        )
 
-  Damage_dict_r, Delta_x_dict_r, total_loss_r, multiplier_r = compute_shock(
-      mr["L_r"].tobytes(), n_r, snames_r, shock_sector_r, shock_value_r
-  )
+    Damage_dict_r, Delta_x_dict_r, total_loss_r, multiplier_r = compute_shock(
+        mr["L_r"].tobytes(), n_r, snames_r, shock_sector_r, shock_value_r
+    )
 
-  # ── TABS REGIONALES ───────────────────────────────────
-  rtab1, rtab2, rtab3, rtab4 = st.tabs([
-      "⬡  Red Regional",
-      "🗺️  Contagio (Antes/Después)",
-      "📊  Ecosistema de Clusters",
-      "📋  Datos completos",
-  ])
+    # ── Tabs Regionales ───────────────────────────────────
+    rtab1, rtab2, rtab3, rtab4 = st.tabs([
+        "⬡  Red Regional",
+        "🗺️  Contagio (Antes/Después)",
+        "📊  Ecosistema de Clusters",
+        "📋  Datos completos",
+    ])
 
-  # Posiciones compartidas entre tabs
-  deg_r   = nx.degree_centrality(Gr)
-  _max_rn = min(40, Gr.number_of_nodes())
+    deg_r   = nx.degree_centrality(Gr)
+    _max_rn = min(40, Gr.number_of_nodes())
 
-  with rtab1:
-      st.markdown("**Red de comunidades estructurales — baseline pre-shock**")
-      col_rn, _ = st.columns([1,3])
-      with col_rn:
-          max_rn = st.slider("Nodos a mostrar", 5, Gr.number_of_nodes(), _max_rn, key="m3_net")
+    with rtab1:
+        st.markdown("**Red de comunidades estructurales — baseline pre-shock**")
+        col_rn, _ = st.columns([1, 3])
+        with col_rn:
+            max_rn = st.slider("Nodos a mostrar", 5, Gr.number_of_nodes(), _max_rn, key="m3_net")
 
-      top_r   = sorted(deg_r, key=deg_r.get, reverse=True)[:max_rn]
-      sub_r   = Gr.subgraph(top_r)
-      pos_r   = nx.spring_layout(sub_r, k=0.45, seed=42)
+        top_r = sorted(deg_r, key=deg_r.get, reverse=True)[:max_rn]
+        sub_r = Gr.subgraph(top_r)
+        pos_r = nx.spring_layout(sub_r, k=0.45, seed=42)
 
-      edge_r = []
-      ew_r   = [sub_r[u][v]["weight"] for u,v in sub_r.edges()]
-      for (u,v),w in zip(sub_r.edges(), ew_r):
-          x0,y0=pos_r[u]; x1,y1=pos_r[v]
-          norm = (w - thresh_r)/(1 - thresh_r + 1e-9)*4 + 0.5
-          edge_r.append(go.Scatter(x=[x0,x1,None], y=[y0,y1,None], mode="lines",
-              line=dict(width=float(norm), color="rgba(100,116,139,0.4)"),
-              hoverinfo="none", showlegend=False))
+        edge_r = []
+        ew_r   = [sub_r[u][v]["weight"] for u, v in sub_r.edges()]
+        for (u, v), w in zip(sub_r.edges(), ew_r):
+            x0, y0 = pos_r[u]
+            x1, y1 = pos_r[v]
+            norm = (w - thresh_r) / (1 - thresh_r + 1e-9) * 4 + 0.5
+            edge_r.append(go.Scatter(
+                x=[x0, x1, None], y=[y0, y1, None], mode="lines",
+                line=dict(width=float(norm), color="rgba(100,116,139,0.4)"),
+                hoverinfo="none", showlegend=False))
 
-      node_r = go.Scatter(
-          x=[pos_r[nd][0] for nd in sub_r.nodes()],
-          y=[pos_r[nd][1] for nd in sub_r.nodes()],
-          mode="markers+text",
-          marker=dict(
-              size=[12 + deg_r[nd]*80 for nd in sub_r.nodes()],
-              color=[int(partition_r[nd]) for nd in sub_r.nodes()],
-              colorscale="Turbo", showscale=True,
-              colorbar=dict(title=dict(text="Cluster", font=dict(family="Space Mono", size=9))),
-              line=dict(width=2, color="white"), opacity=0.9,
-          ),
-          text=[nd[:18] for nd in sub_r.nodes()],
-          textfont=dict(size=7, family="Space Mono"),
-          textposition="top center",
-          hovertext=[f"<b>{nd}</b><br>Cluster: {partition_r[nd]}<br>"
-                     f"Grado: {sub_r.degree(nd)}" for nd in sub_r.nodes()],
-          hoverinfo="text")
+        node_r = go.Scatter(
+            x=[pos_r[nd][0] for nd in sub_r.nodes()],
+            y=[pos_r[nd][1] for nd in sub_r.nodes()],
+            mode="markers+text",
+            marker=dict(
+                size=[12 + deg_r[nd] * 80 for nd in sub_r.nodes()],
+                color=[int(partition_r[nd]) for nd in sub_r.nodes()],
+                colorscale="Turbo", showscale=True,
+                colorbar=dict(title=dict(text="Cluster", font=dict(family="Space Mono", size=9))),
+                line=dict(width=2, color="white"), opacity=0.9,
+            ),
+            text=[nd[:18] for nd in sub_r.nodes()],
+            textfont=dict(size=7, family="Space Mono"),
+            textposition="top center",
+            hovertext=[f"<b>{nd}</b><br>Cluster: {partition_r[nd]}<br>"
+                       f"Grado: {sub_r.degree(nd)}" for nd in sub_r.nodes()],
+            hoverinfo="text")
 
-      fig_rnet = go.Figure(data=edge_r + [node_r])
-      fig_rnet.update_layout(
-          title=dict(text="Red regional — comunidades estructurales (baseline)",
-                     font=dict(family="Space Mono", size=12, color="#94a3b8")),
-          showlegend=False, hovermode="closest",
-          xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-          yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-          height=620, **PLOTLY_THEME)
-      st.plotly_chart(fig_rnet, use_container_width=True)
+        fig_rnet = go.Figure(data=edge_r + [node_r])
+        fig_rnet.update_layout(
+            title=dict(text="Red regional — comunidades estructurales (baseline)",
+                       font=dict(family="Space Mono", size=12, color="#94a3b8")),
+            showlegend=False, hovermode="closest",
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            height=620, **PLOTLY_THEME)
+        st.plotly_chart(fig_rnet, use_container_width=True)
 
-  with rtab2:
-      st.markdown(f"""
-      <div class="alert-box">
-        <strong>Shock aplicado:</strong> {shock_value_r:,.0f} MXN M en
-        <em>'{shock_sector_r}'</em> &nbsp;→&nbsp;
-        Pérdida total regional estimada: <strong>{total_loss_r:,.2f} MXN M</strong>
-        &nbsp;·&nbsp; Multiplicador: <strong>{multiplier_r:.4f}</strong>
-      </div>
-      """, unsafe_allow_html=True)
+    with rtab2:
+        st.markdown(f"""
+        <div class="alert-box">
+          <strong>Shock aplicado:</strong> {shock_value_r:,.0f} MXN M en
+          <em>'{shock_sector_r}'</em> &nbsp;→&nbsp;
+          Pérdida total regional estimada: <strong>{total_loss_r:,.2f} MXN M</strong>
+          &nbsp;·&nbsp; Multiplicador: <strong>{multiplier_r:.4f}</strong>
+        </div>
+        """, unsafe_allow_html=True)
 
-      col_pre, col_post = st.columns(2)
+        col_pre, col_post = st.columns(2)
 
-      with col_pre:
-          st.markdown("**Pre-Shock: Estructura Baseline**")
-          node_pre = go.Scatter(
-              x=[pos_r.get(nd, [0])[0] for nd in sub_r.nodes() if nd in pos_r],
-              y=[pos_r.get(nd, [0,0])[1] for nd in sub_r.nodes() if nd in pos_r],
-              mode="markers+text",
-              marker=dict(size=16,
-                  color=[int(partition_r[nd]) for nd in sub_r.nodes() if nd in pos_r],
-                  colorscale="Turbo", showscale=False,
-                  line=dict(width=2, color="white"), opacity=0.85),
-              text=[nd[:14] for nd in sub_r.nodes() if nd in pos_r],
-              textfont=dict(size=6, family="Space Mono"),
-              textposition="top center",
-              hovertext=[f"<b>{nd}</b><br>Baseline" for nd in sub_r.nodes() if nd in pos_r],
-              hoverinfo="text")
-          fig_pre = go.Figure(data=edge_r + [node_pre])
-          fig_pre.update_layout(
-              title=dict(text="Baseline (nodos uniformes)",
-                         font=dict(family="Space Mono", size=11, color="#94a3b8")),
-              showlegend=False, hovermode="closest",
-              xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-              yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-              height=480, **PLOTLY_THEME)
-          st.plotly_chart(fig_pre, use_container_width=True)
+        with col_pre:
+            st.markdown("**Pre-Shock: Estructura Baseline**")
+            node_pre = go.Scatter(
+                x=[pos_r.get(nd, [0, 0])[0] for nd in sub_r.nodes() if nd in pos_r],
+                y=[pos_r.get(nd, [0, 0])[1] for nd in sub_r.nodes() if nd in pos_r],
+                mode="markers+text",
+                marker=dict(
+                    size=16,
+                    color=[int(partition_r[nd]) for nd in sub_r.nodes() if nd in pos_r],
+                    colorscale="Turbo", showscale=False,
+                    line=dict(width=2, color="white"), opacity=0.85),
+                text=[nd[:14] for nd in sub_r.nodes() if nd in pos_r],
+                textfont=dict(size=6, family="Space Mono"),
+                textposition="top center",
+                hovertext=[f"<b>{nd}</b><br>Baseline" for nd in sub_r.nodes() if nd in pos_r],
+                hoverinfo="text")
+            fig_pre = go.Figure(data=edge_r + [node_pre])
+            fig_pre.update_layout(
+                title=dict(text="Baseline (nodos uniformes)",
+                           font=dict(family="Space Mono", size=11, color="#94a3b8")),
+                showlegend=False, hovermode="closest",
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                height=480, **PLOTLY_THEME)
+            st.plotly_chart(fig_pre, use_container_width=True)
 
-      with col_post:
-          st.markdown("**Post-Shock: Desplazamiento por Contagio**")
-          max_dmg = max(Damage_dict_r.values()) if Damage_dict_r else 1
-          post_sizes = [
-              max(8, 8 + 50 * (Damage_dict_r.get(nd, 0) / max_dmg))
-              for nd in sub_r.nodes() if nd in pos_r
-          ]
-          node_colors_post = [int(partition_r[nd]) for nd in sub_r.nodes() if nd in pos_r]
-          is_origin = [nd == shock_sector_r for nd in sub_r.nodes() if nd in pos_r]
+        with col_post:
+            st.markdown("**Post-Shock: Desplazamiento por Contagio**")
+            max_dmg    = max(Damage_dict_r.values()) if Damage_dict_r else 1
+            post_sizes = [
+                max(8, 8 + 50 * (Damage_dict_r.get(nd, 0) / max_dmg))
+                for nd in sub_r.nodes() if nd in pos_r
+            ]
+            node_colors_post = [int(partition_r[nd]) for nd in sub_r.nodes() if nd in pos_r]
 
-          node_post = go.Scatter(
-              x=[pos_r[nd][0] for nd in sub_r.nodes() if nd in pos_r],
-              y=[pos_r[nd][1] for nd in sub_r.nodes() if nd in pos_r],
-              mode="markers+text",
-              marker=dict(size=post_sizes,
-                  color=node_colors_post, colorscale="Turbo", showscale=False,
-                          line=dict(width=1.5, color="white"),
-                  opacity=0.90),
-              text=[nd[:14] for nd in sub_r.nodes() if nd in pos_r],
-              textfont=dict(size=6, family="Space Mono"),
-              textposition="top center",
-              hovertext=[f"<b>{nd}</b><br>Pérdida: {Damage_dict_r.get(nd,0):,.2f} MXN M"
-                         for nd in sub_r.nodes() if nd in pos_r],
-              hoverinfo="text")
-          fig_post = go.Figure(data=edge_r + [node_post])
-          fig_post.update_layout(
-              title=dict(text="Post-Shock (tamaño ∝ pérdida financiera | ⭕ = origen)",
-                         font=dict(family="Space Mono", size=11, color="#94a3b8")),
-              showlegend=False, hovermode="closest",
-              xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-              yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-              height=480, **PLOTLY_THEME)
-          st.plotly_chart(fig_post, use_container_width=True)
+            node_post = go.Scatter(
+                x=[pos_r[nd][0] for nd in sub_r.nodes() if nd in pos_r],
+                y=[pos_r[nd][1] for nd in sub_r.nodes() if nd in pos_r],
+                mode="markers+text",
+                marker=dict(
+                    size=post_sizes,
+                    color=node_colors_post, colorscale="Turbo", showscale=False,
+                    line=dict(width=1.5, color="white"), opacity=0.90),
+                text=[nd[:14] for nd in sub_r.nodes() if nd in pos_r],
+                textfont=dict(size=6, family="Space Mono"),
+                textposition="top center",
+                hovertext=[f"<b>{nd}</b><br>Pérdida: {Damage_dict_r.get(nd, 0):,.2f} MXN M"
+                           for nd in sub_r.nodes() if nd in pos_r],
+                hoverinfo="text")
+            fig_post = go.Figure(data=edge_r + [node_post])
+            fig_post.update_layout(
+                title=dict(text="Post-Shock (tamaño ∝ pérdida financiera)",
+                           font=dict(family="Space Mono", size=11, color="#94a3b8")),
+                showlegend=False, hovermode="closest",
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                height=480, **PLOTLY_THEME)
+            st.plotly_chart(fig_post, use_container_width=True)
 
-      st.markdown('<div class="section-title">TOP SECTORES IMPACTADOS</div>', unsafe_allow_html=True)
-      df_damage_r = pd.DataFrame({
-          "sector":     [nd for nd in Gr.nodes()],
-          "cluster":    [f"C{partition_r[nd]}" for nd in Gr.nodes()],
-          "pérdida_abs": [Damage_dict_r.get(nd, 0) for nd in Gr.nodes()],
-          "Δx":          [Delta_x_dict_r.get(nd, 0) for nd in Gr.nodes()],
-      }).sort_values("pérdida_abs", ascending=False)
+        st.markdown('<div class="section-title">TOP SECTORES IMPACTADOS</div>', unsafe_allow_html=True)
+        df_damage_r = pd.DataFrame({
+            "sector":      [nd for nd in Gr.nodes()],
+            "cluster":     [f"C{partition_r[nd]}" for nd in Gr.nodes()],
+            "pérdida_abs": [Damage_dict_r.get(nd, 0) for nd in Gr.nodes()],
+            "Δx":          [Delta_x_dict_r.get(nd, 0) for nd in Gr.nodes()],
+        }).sort_values("pérdida_abs", ascending=False)
 
-      fig_bar_r = px.bar(df_damage_r.head(15),
-          x="pérdida_abs", y="sector", orientation="h", color="cluster",
-          title=f"Top 15 sectores más afectados por shock en '{shock_sector_r}'",
-          labels={"pérdida_abs": "Pérdida absoluta (MXN M)", "sector": ""})
-      fig_bar_r.update_layout(yaxis=dict(autorange="reversed"), height=440, **PLOTLY_THEME)
-      st.plotly_chart(fig_bar_r, use_container_width=True)
+        fig_bar_r = px.bar(df_damage_r.head(15),
+            x="pérdida_abs", y="sector", orientation="h", color="cluster",
+            title=f"Top 15 sectores más afectados por shock en '{shock_sector_r}'",
+            labels={"pérdida_abs": "Pérdida absoluta (MXN M)", "sector": ""})
+        fig_bar_r.update_layout(yaxis=dict(autorange="reversed"), height=440, **PLOTLY_THEME)
+        st.plotly_chart(fig_bar_r, use_container_width=True)
 
-  with rtab3:
-      df_cluster_r = pd.DataFrame({
-          "sector":  list(partition_r.keys()),
-          "cluster": [f"C{v}" for v in partition_r.values()],
-          "pérdida": [Damage_dict_r.get(s, 0) for s in partition_r.keys()],
-      })
-      cluster_dmg = (df_cluster_r.groupby("cluster")["pérdida"]
-                     .sum().reset_index().sort_values("pérdida", ascending=False))
+    with rtab3:
+        df_cluster_r = pd.DataFrame({
+            "sector":  list(partition_r.keys()),
+            "cluster": [f"C{v}" for v in partition_r.values()],
+            "pérdida": [Damage_dict_r.get(s, 0) for s in partition_r.keys()],
+        })
+        cluster_dmg = (df_cluster_r.groupby("cluster")["pérdida"]
+                       .sum().reset_index()
+                       .sort_values("pérdida", ascending=False))
 
-      ce1, ce2 = st.columns(2)
-      with ce1:
-          fig_eco = px.bar(cluster_dmg, x="cluster", y="pérdida", color="cluster",
-              title="Daño sistémico por comunidad (Ecosystem Contagion)",
-              labels={"pérdida": "Pérdida total MXN M", "cluster": "Comunidad Louvain"})
-          fig_eco.update_layout(showlegend=False, height=380, **PLOTLY_THEME)
-          st.plotly_chart(fig_eco, use_container_width=True)
-      with ce2:
-          fig_pie_r = px.pie(cluster_dmg, values="pérdida", names="cluster",
-              color_discrete_sequence=px.colors.sequential.Turbo,
-              title="Distribución del shock por comunidad")
-          fig_pie_r.update_layout(height=380, **PLOTLY_THEME)
-          st.plotly_chart(fig_pie_r, use_container_width=True)
+        ce1, ce2 = st.columns(2)
+        with ce1:
+            fig_eco = px.bar(cluster_dmg, x="cluster", y="pérdida", color="cluster",
+                title="Daño sistémico por comunidad (Ecosystem Contagion)",
+                labels={"pérdida": "Pérdida total MXN M", "cluster": "Comunidad Louvain"})
+            fig_eco.update_layout(showlegend=False, height=380, **PLOTLY_THEME)
+            st.plotly_chart(fig_eco, use_container_width=True)
+        with ce2:
+            fig_pie_r = px.pie(cluster_dmg, values="pérdida", names="cluster",
+                color_discrete_sequence=px.colors.sequential.Turbo,
+                title="Distribución del shock por comunidad")
+            fig_pie_r.update_layout(height=380, **PLOTLY_THEME)
+            st.plotly_chart(fig_pie_r, use_container_width=True)
 
-      st.markdown('<div class="section-title">MÉTRICAS DE CONTAGIO</div>', unsafe_allow_html=True)
-      km1, km2, km3, km4 = st.columns(4)
-      km1.metric("Pérdida total regional", f"{total_loss_r:,.1f} M")
-      km2.metric("Multiplicador regional", f"{multiplier_r:.4f}")
-      km3.metric("Cluster más afectado",   cluster_dmg.iloc[0]["cluster"])
-      km4.metric("Pérdida en cluster top", f"{cluster_dmg.iloc[0]['pérdida']:,.1f} M")
+        st.markdown('<div class="section-title">MÉTRICAS DE CONTAGIO</div>', unsafe_allow_html=True)
+        km1, km2, km3, km4 = st.columns(4)
+        km1.metric("Pérdida total regional", f"{total_loss_r:,.1f} M")
+        km2.metric("Multiplicador regional", f"{multiplier_r:.4f}")
+        km3.metric("Cluster más afectado",   cluster_dmg.iloc[0]["cluster"])
+        km4.metric("Pérdida en cluster top", f"{cluster_dmg.iloc[0]['pérdida']:,.1f} M")
 
-  with rtab4:
-      st.markdown("**Tabla completa — daño financiero por sector y comunidad**")
-      df_full_r = pd.DataFrame({
-          "sector":      [nd for nd in Gr.nodes()],
-          "cluster":     [f"C{partition_r[nd]}" for nd in Gr.nodes()],
-          "pérdida_abs": [Damage_dict_r.get(nd, 0) for nd in Gr.nodes()],
-          "Δx":          [Delta_x_dict_r.get(nd, 0) for nd in Gr.nodes()],
-          "grado":       [Gr.degree(nd) for nd in Gr.nodes()],
-      }).sort_values("pérdida_abs", ascending=False).reset_index(drop=True)
+    with rtab4:
+        st.markdown("**Tabla completa — daño financiero por sector y comunidad**")
+        df_full_r = pd.DataFrame({
+            "sector":      [nd for nd in Gr.nodes()],
+            "cluster":     [f"C{partition_r[nd]}" for nd in Gr.nodes()],
+            "pérdida_abs": [Damage_dict_r.get(nd, 0) for nd in Gr.nodes()],
+            "Δx":          [Delta_x_dict_r.get(nd, 0) for nd in Gr.nodes()],
+            "grado":       [Gr.degree(nd) for nd in Gr.nodes()],
+        }).sort_values("pérdida_abs", ascending=False).reset_index(drop=True)
 
-      rf1, rf2 = st.columns(2)
-      f_cl_r   = rf1.multiselect("Filtrar cluster", sorted(df_full_r["cluster"].unique()), key="m3_fcl")
-      f_sort_r = rf2.selectbox("Ordenar por", ["pérdida_abs", "Δx", "grado"], key="m3_fs")
+        rf1, rf2 = st.columns(2)
+        f_cl_r   = rf1.multiselect("Filtrar cluster", sorted(df_full_r["cluster"].unique()), key="m3_fcl")
+        f_sort_r = rf2.selectbox("Ordenar por", ["pérdida_abs", "Δx", "grado"], key="m3_fs")
 
-      df_view_r = df_full_r.copy()
-      if f_cl_r: df_view_r = df_view_r[df_view_r["cluster"].isin(f_cl_r)]
-      df_view_r = df_view_r.sort_values(f_sort_r, ascending=False).reset_index(drop=True)
+        df_view_r = df_full_r.copy()
+        if f_cl_r:
+            df_view_r = df_view_r[df_view_r["cluster"].isin(f_cl_r)]
+        df_view_r = df_view_r.sort_values(f_sort_r, ascending=False).reset_index(drop=True)
 
-      st.dataframe(df_view_r, use_container_width=True, height=480)
-      st.download_button(
-          "⬇ Descargar CSV de contagio",
-          df_view_r.to_csv(index=False).encode(),
-          f"contagio_{(selected_state_name or 'regional').replace(' ','_')[:20]}.csv",
-          "text/csv",
-      )
+        st.dataframe(df_view_r, use_container_width=True, height=480)
+        st.download_button(
+            "⬇ Descargar CSV de contagio",
+            df_view_r.to_csv(index=False).encode(),
+            f"contagio_{(selected_state_name or 'regional').replace(' ', '_')[:20]}.csv",
+            "text/csv",
+        )
 
 
 # ══════════════════════════════════════════════════════════
