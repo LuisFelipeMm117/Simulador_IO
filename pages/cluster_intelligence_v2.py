@@ -31,7 +31,7 @@ from pathlib import Path
 # CONFIGURACIÓN DE PÁGINA
 # ══════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="Cluster Intelligence v2",
+    page_title="Cluster Intelligence",
     page_icon="⬡",
     layout="wide",
     initial_sidebar_state="expanded",
